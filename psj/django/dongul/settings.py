@@ -43,7 +43,6 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     # APP
     'accounts',   
-    'products',
     # DRF
     'rest_framework',
     'rest_framework.authtoken',
@@ -71,16 +70,21 @@ SITE_ID = 1
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
-    ]
+    ],
+    # permission
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ],
 }
 # 사용자 수정
 AUTH_USER_MODEL = 'accounts.User'
-
+ACCOUNT_ADAPTER  = 'accounts.models.CustomAccountAdapter'
 # REST-AUTH 회원가입 기본 Serailizer 재정의
 REST_AUTH = {
     'REGISTER_SERIALIZER': 'accounts.serializers.CustomRegisterSerializer',
+    'USER_DETAILS_SERIALIZER': 'accounts.serializers.CustomUserDetailsSerializer',
 }
-
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -94,7 +98,9 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'dongul.urls'
-
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',  # Vue.js 개발 서버 URL
+]
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
