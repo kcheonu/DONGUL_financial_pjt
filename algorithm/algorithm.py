@@ -1,21 +1,88 @@
 import pandas as pd
-from geopy.distance import geodesic  # 거리 계산을 위한 라이브러리 (예시)
+from pprint import pprint
+import json
+import os
+# from geopy.distance import geodesic  # 거리 계산을 위한 라이브러리 (예시)
 
-# 가상 데이터 생성
-goods_data = [
-    {
-        '상품명': f'예금 A{i}', 
-        '대면 방식': '대면' if i % 2 == 0 else '비대면', 
-        '금리': round(2.0 + (i % 5) * 0.1, 2),
-        '우대금리': round(0.5 if i % 3 == 0 else 0.3, 2),
-        '저축 기간': (6 + (i % 4) * 6), 
-        '저축 금액 상한선': 5000000 + (i % 5) * 1000000,
-        '선호 은행': f'은행{(i % 5) + 1}', 
-        '연령대': (20 + (i % 4) * 10),
-        '주소 위치': f'위치{(i % 7) + 1}',
-        '평점': round(3.5 + (i % 5) * 0.2, 2)
-    } for i in range(1, 51)
-]
+# 금감원 api키로 데이터 받아오기.
+import requests
+api_key = 'db6d119bdb8c06afd652e4329d8bc648'
+# for i in range(1, 50):
+url = 'http://finlife.fss.or.kr/finlifeapi/depositProductsSearch.json?auth=db6d119bdb8c06afd652e4329d8bc648&topFinGrpNo=020000&pageNo=1'
+response = requests.get(url)
+
+output_dir = "C:/Users/SSAFY/Desktop/folder/pjt-10/algorithm/"
+os.makedirs(output_dir, exist_ok=True)
+
+if response.status_code == 200:
+    goods_data = response.json()
+    with open(os.path.join(output_dir, 'output.txt'), 'w', encoding='utf-8') as file:
+        json.dump(goods_data, file, indent=4, ensure_ascii=False)
+    pprint(goods_data)
+else:
+    print(f'Failed to fetch data. status code : {response.status_code}')
+
+# dcls_end_day : 공시 종료일
+# dcls_month : 공시제출월[YYYYMM]
+# dcls_strt_day : 공시 시작일
+# etc_note : 기타 유의 사항
+# fin_co_no : 금융회사 코드
+# fin_co_subm_day : 금융회사 제출일[YYYYMMDDHH24MI]
+# fin_prdt_cd : 금융상품 코드
+# fin_prdt_nm : 금융 상품명
+# join_deny : 가입제한 Ex) 1:제한없음, 2:서민전용, 3:일부제한
+# join_member : 가입대상
+# join_way : 가입 방법
+# kor_co_nm : 금융회사 명
+# max_limit : 최고한도
+# mtrt_int : 만기 후 이자율
+# spcl_cnd : 우대조건
+
+# 데이터 : {"
+# dcls_month":"201609",
+# "fin_co_no":"0010001",
+# "fin_prdt_cd":"WR0001A",
+# "kor_co_nm":"우리은행",
+# "fin_prdt_nm":"우리웰리치 주거래예금",
+# "join_way":"영업점,인터넷,스마트폰",
+# "mtrt_int":"만기 후
+# - 1개월이내 : 만기시점약정이율×50%
+# - 1개월초과 6개월이내: 만기시점약정이율×30%
+# - 6개월초과 : 만기시점약정이율×20%
+# 
+# ※ 만기시점 약정이율 : 일반정기예금 금리",
+# "spcl_cnd":"다음 중 하나 충족한 입금건에 대해  최고 연0.2%p
+# 순신규고객
+# 가계대출이용고객
+# 입금일 전월 주거래우대조건 2가지이상
+# 건별3천만원이상
+# 건별 만기 자동재예치",
+# "join_deny":"1",
+# "join_member":"실명의 개인",
+# "etc_note":"
+# -추가입금은 신규가입 시 선택한 예치기간을 각 입금건별 입금일로부터 적용
+# -재예치는 입금건별 최초 입금일로부터 최장 10년간 가능",
+# "max_limit":null,
+# "dcls_strt_day":"20160920",
+# "dcls_end_day":null,
+# "fin_co_subm_day":"201609201028"
+
+
+# # 가상 데이터 생성
+# goods_data = [
+#     {
+#         '상품명': f'예금 A{i}', 
+#         '대면 방식': '대면' if i % 2 == 0 else '비대면', 
+#         '금리': round(2.0 + (i % 5) * 0.1, 2),
+#         '우대금리': round(0.5 if i % 3 == 0 else 0.3, 2),
+#         '저축 기간': (6 + (i % 4) * 6), 
+#         '저축 금액 상한선': 5000000 + (i % 5) * 1000000,
+#         '선호 은행': f'은행{(i % 5) + 1}', 
+#         '연령대': (20 + (i % 4) * 10),
+#         '주소 위치': f'위치{(i % 7) + 1}',
+#         '평점': round(3.5 + (i % 5) * 0.2, 2)
+#     } for i in range(1, 51)
+# ]
 
 # 데이터프레임으로 변환
 df = pd.DataFrame(goods_data)
