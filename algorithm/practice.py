@@ -83,14 +83,14 @@ def recommend_products_with_options(consumer, products, top_n=10):
         base_rate = float(product.get("intr_rate", 0))
         bonus_rate = float(product.get("intr_rate2", 0))
         user_bonus_rate = analyze_preferred_conditions(consumer, product)
-        final_rate = base_rate + bonus_rate + user_bonus_rate
+        final_rate = max(base_rate, bonus_rate + user_bonus_rate)
 
         recommendations.append({
             "금융회사명": product["kor_co_nm"],
             "금융상품명": product["fin_prdt_nm"],
             "기본 금리": round(base_rate, 2),
             "우대 금리": round(bonus_rate, 2),
-            "소비자 우대 금리": round(user_bonus_rate, 2),
+            # "소비자 우대 금리": round(user_bonus_rate, 2),
             "최종 금리": round(final_rate, 2),
             "저축 기간": product["save_trm"],
         })
