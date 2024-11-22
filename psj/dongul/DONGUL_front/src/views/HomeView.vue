@@ -35,7 +35,7 @@ const userStore = useUserStore()
         <div class="caro-item-text">
           <p>행복한 금융!!~!</p>
           <div class="title">
-            <p><span class="color">칼바람 할 게이 없냐</span></p>
+            <p><span class="color">김천우</span></p>
             <p>오세요!</p>
           </div>
           <v-btn
