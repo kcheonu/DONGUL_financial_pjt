@@ -11,23 +11,29 @@ EXCHANGE_API_URL = f'https://www.koreaexim.go.kr/site/program/financial/exchange
 
 
 @api_view(['GET'])
-def index (request):
-    response = requests.get(EXCHANGE_API_URL).json()
-    exist_response = Exchange.objects.all()
-   
-    if response: # 가 있다면기존 데이터를 업데이트
-        if not exist_response: # 쿼리셋이 비어있다면
-                serializer = ExchangeSerializer(data=response, many=True)
-                if serializer.is_valid(raise_exception=True):
-                    serializer.save()
-                    return Response(serializer.data)
-        else: # exist_response가 존재한다면
+def index(request):
+    try:
+        # SSL 인증 검증 비활성화
+        response = requests.get(EXCHANGE_API_URL, verify=False)
+        if response.status_code != 200:
+            return Response({'error': '외부 API 호출 실패'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        data = response.json()
+        if not data:
+            return Response({'error': '외부 API에서 빈 응답'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # 기존 데이터 삭제 후 새 데이터 저장
+        exist_response = Exchange.objects.all()
+        if exist_response:
             Exchange.objects.all().delete()
-            serializer = ExchangeSerializer(data=response, many=True)     
-            if serializer.is_valid(raise_exception=True):
-                serializer.save()
-                return Response(serializer.data)
-    # 없다면
-    serializer = ExchangeSerializer(exist_response, many=True)
-    return Response(serializer.data)
+
+        serializer = ExchangeSerializer(data=data, many=True)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        print(f"Error in index view: {e}")
+        return Response({'error': '서버 내부 오류'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
