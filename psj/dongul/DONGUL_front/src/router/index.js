@@ -19,7 +19,7 @@ import MyPageView from '@/views/MyPageView.vue'
 import MyPage from '@/components/MyPage.vue'
 import ProductManage from '@/components/ProductManage.vue'
 import ProductRecommend from '@/components/ProductRecommend.vue'
-import RecommendListView from '@/components/RecommendListView.vue'
+import RecommendListView from '@/views/RecommendListView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
