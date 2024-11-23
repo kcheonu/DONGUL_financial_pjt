@@ -225,7 +225,7 @@ form * {
 }
 
 .warning {
-  color: #5c10c0;
+  color: #d61150;
   font-size: 12px;
   margin: 0 0 0 15px;
 }

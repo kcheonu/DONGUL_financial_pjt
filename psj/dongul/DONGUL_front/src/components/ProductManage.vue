@@ -489,6 +489,6 @@ tbody > tr {
 
 tbody > tr:hover {
   background-color: rgb(247, 250, 253);
-  color: #1089FF;
+  color: #3CB371;
 }
 </style>

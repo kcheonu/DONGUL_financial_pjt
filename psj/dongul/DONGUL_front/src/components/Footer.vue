@@ -36,7 +36,7 @@ footer {
   display: flex;
   align-items: center;
   gap: 5px;
-  color: #1089FF !important;
+  color: #3CB371 !important;
   font-size: 30px;
   text-decoration: none;
   font-family: 'Francois One', sans-serif;

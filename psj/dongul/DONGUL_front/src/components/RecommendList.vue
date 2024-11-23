@@ -9,10 +9,10 @@ const headers = [
   { title: '공시 제출일', align: 'start', sortable: false, width:'10%', key: 'dcls_month' },
   { title: '금융회사명', align: 'start', sortable: false, key: 'kor_co_nm' },
   { title: '상품명', align: 'center', sortable: false, width:'32%', key: 'name' },
-  { title: '6개월 (Click to sort)', align: 'end', width:'12%', key: '6month' },
-  { title: '12개월 (Click to sort)', align: 'end', width:'12%', key: '12month' },
-  { title: '24개월 (Click to sort)', align: 'end', width:'12%', key: '24month' },
-  { title: '36개월 (Click to sort)', align: 'end', width:'12%', key: '36month' },
+  { title: '6개월', align: 'center', width:'12%', key: '6month' },
+  { title: '12개월', align: 'center', width:'12%', key: '12month' },
+  { title: '24개월', align: 'center', width:'12%', key: '24month' },
+  { title: '36개월', align: 'center', width:'12%', key: '36month' },
 ]
 
 const deposits = ref([])
@@ -267,7 +267,7 @@ const deleteDepositUser = function () {
               :intr-rate="intrRate"
               :intr-rate2="intrRate2"
             />
-            <p class="text-caption">* 개월별 평균 예금 금리는 2023년 11월 기준입니다.</p>
+            <p class="text-caption">* 개월별 평균 예금 금리는 2024년 11월 기준입니다.</p>
             <p class="text-caption">* 차트에 없는 이자율은 상품에 존재하지 않는 옵션입니다.</p>
           </div>
           
@@ -330,7 +330,7 @@ tbody > tr {
 
 tbody > tr:hover {
   background-color: rgb(247, 250, 253);
-  color: #1089FF;
+  color: #3CB371;
 }
 
 .table {

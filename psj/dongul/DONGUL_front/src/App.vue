@@ -17,7 +17,7 @@ import Footer from '@/components/Footer.vue'
 <style scoped>
 .hr {
   height: 1px;
-  background-color: #DBDBDB;
+  background-color: #dbdbdb;
 }
 
 .footer {

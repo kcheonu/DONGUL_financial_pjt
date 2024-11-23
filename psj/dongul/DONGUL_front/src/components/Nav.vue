@@ -16,11 +16,7 @@ const userStore = useUserStore()
       <RouterLink :to="{ name: 'depositList' }">
         금리비교
       </RouterLink>
-      
-      <RouterLink :to="{ name: 'recommend' }">
-        상품추천
-      </RouterLink>
-      
+
       <RouterLink :to="{ name: 'exchange' }">
         환율계산
       </RouterLink>

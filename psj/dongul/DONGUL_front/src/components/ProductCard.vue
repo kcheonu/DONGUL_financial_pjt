@@ -41,7 +41,7 @@ const clickDetail = function () {
   transition: 300ms;
 }
 .card:hover {
-  color: #1089FF;
+  color: #3CB371;
   background-color: rgb(247, 250, 253);
 }
 </style>

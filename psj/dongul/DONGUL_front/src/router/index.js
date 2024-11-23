@@ -5,8 +5,6 @@ import NotFound from '@/components/NotFound.vue'
 import CompareListView from '@/views/CompareListView.vue'
 import DepositList from '@/components/DepositList.vue'
 import SavingList from '@/components/SavingList.vue'
-import RecommendDepositList from '@/components/RecommendDepositList.vue'
-import RecommendSavingList from '@/components/RecommendSavingList.vue'
 import ExchangeView from '@/views/ExchangeView.vue'
 import BankMapView from '@/views/BankMapView.vue'
 import PostListView from '@/views/PostListView.vue'
@@ -19,7 +17,6 @@ import MyPageView from '@/views/MyPageView.vue'
 import MyPage from '@/components/MyPage.vue'
 import ProductManage from '@/components/ProductManage.vue'
 import ProductRecommend from '@/components/ProductRecommend.vue'
-import RecommendListView from '@/views/RecommendListView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -45,24 +42,6 @@ const router = createRouter({
         },
       ]
     },
-    {
-      path: '/recommend',
-      name: 'recommend',
-      component: RecommendListView,
-      children: [
-        {
-          path: 'recommenddeposit',
-          name: 'recommenddepositList',
-          component: RecommendDepositList,
-        },
-        {
-          path: 'recommendsaving',
-          name: 'recommendsavingList',
-          component: RecommendSavingList,
-        },
-      ]
-    },
-    
     {
       path: '/exchange',
       name: 'exchange',

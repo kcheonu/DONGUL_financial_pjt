@@ -26,7 +26,7 @@ const userStore = useUserStore()
 }
 
 a.active {
-  color: #1089FF;
+  color: #3CB371;
 }
 
 header {

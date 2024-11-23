@@ -20,7 +20,7 @@
 }
 
 a.active {
-  color: #1089FF;
+  color: #08ba32;
 }
 
 header {

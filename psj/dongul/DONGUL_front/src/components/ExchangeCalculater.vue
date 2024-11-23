@@ -25,7 +25,7 @@ const emit = defineEmits(['passCurrency'])
 onMounted(() => {
   axios({
     method: 'get',
-    url: `${userStore.API_URL}/exchange/`
+    url: `${userStore.API_URL}/exchange/load_latest_data/`
   })
     .then((res) => {
       response.value = res.data.filter(data => data['ttb'] !== '0')
