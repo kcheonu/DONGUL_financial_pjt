@@ -173,7 +173,7 @@ const save = function () {
                 alt="profile-img"
               ></v-img>
             </v-avatar>
-            <p class="ml-1 text-caption">{{ post.user.name }}</p>
+            <p class="ml-1 text-caption">{{ post.user.nickname }}</p>
           </div>
         </div>
         
@@ -278,7 +278,7 @@ const save = function () {
               alt="profile-img"
             ></v-img>
           </v-avatar>
-          <p class="ml-1 text-caption">{{ comment.user.name }}</p>
+          <p class="ml-1 text-caption">{{ comment.user.nickname }}</p>
         </div>
         <div class="lower mt-1 mb-10 text-body-2 d-flex justify-space-between align-start">
           <p class="comment-left" v-html="comment.content"></p>

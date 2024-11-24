@@ -72,14 +72,53 @@ const userStore = useUserStore()
 </template>
 
 <style scoped>
-.carousel-container {
-  width: 60%; /* 화면 너비의 60% */
+.v-carousel {
+  background-color: #ceb424;
+  border-bottom: 1px solid #ceb424;
+  width: 70%; /* 화면 너비의 70% */
   margin: 0 auto; /* 중앙 정렬 */
 }
-
-.v-carousel {
-  border-bottom: 1px solid #DBDBDB;
+.caro-item-text {
+  position: absolute;
+  top: 26%;
+  left: 5%;
 }
+
+.item3 {
+  position: absolute;
+  top: 26%;
+  left: 5%;
+}
+
+.caro-item-img {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  right: 5%;
+}
+
+@media (max-width: 1250px) {
+  .caro-item-img {
+    right: 3%;
+  }
+
+  .caro-item-text,
+  .item3 {
+    left: 3%;
+  }
+}
+
+@media (min-width: 1600px) {
+  .caro-item-img {
+    right: 7%;
+  }
+
+  .caro-item-text,
+  .item3 {
+    left: 7%;
+  }
+}
+
 
 .caro-item-text {
   position: absolute;
@@ -139,3 +178,4 @@ const userStore = useUserStore()
   }
 }
 </style>
+

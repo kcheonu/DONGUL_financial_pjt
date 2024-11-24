@@ -30,52 +30,43 @@ onMounted(() => {
 <template>
   <div class="container">
     <div class="d-flex justify-space-between align-end">
-      <h1>금융상품 <span class="color">자유</span> 게시판</h1>
-      <v-btn
+      <h1>자유게시판</h1>
+      <button
         v-if="userStore.isLogin"
-        variant="flat"
-        color="#1089FF"
-        :to="{ name: 'postCreate' }"
-      >글 쓰기</v-btn>
+        class="btn-create"
+        @click="() => router.push({ name: 'postCreate' })"
+      >글 쓰기</button>
     </div>
-    <v-table class="table  elevation-6">
-      <thead>
-        <tr>
-          <th class="text-left pl-15">
-            제목
-          </th>
-          <th class="text-left">
-            작성자
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          v-for="post in postStore.posts"
-          :key="post.id"
-          @click="clickTr(post.id)"
-        >
-          <td class="pl-15">{{ post.title }}</td>
-          <td width="25%" class="text-left">
-            <v-avatar size="small">
-                <v-img
-                  cover
-                  id="img"
-                  :src="`${userStore.API_URL}${post.user.profile_img}`"
-                  alt="profile-img"
-                ></v-img>
-              </v-avatar>
-            {{ post.user.name }}</td>
-        </tr>
-      </tbody>
-    </v-table>
-    <v-pagination
-      v-model="page"
-      :length="postStore.totalPage"
-      :total-visible="6"
-      color="#1089FF"
-      rounded="circle"
-    ></v-pagination>
+    
+    <!-- Custom Table -->
+    <div class="table">
+      <div class="table-header">
+        <div class="table-cell">제목</div>
+        <div class="table-cell">작성자</div>
+        <div class="table-cell">작성일</div>
+      </div>
+      <div 
+        class="table-row" 
+        v-for="post in postStore.posts" 
+        :key="post.id" 
+        @click="clickTr(post.id)"
+      >
+        <div class="table-cell">{{ post.title }}</div>
+        <div class="table-cell">{{ post.user.nickname }}</div>
+        <div class="table-cell">{{ post.created_at.slice(0,10) }}</div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      <button 
+        class="page-btn"
+        v-for="n in postStore.totalPage" 
+        :key="n"
+        :class="{ active: n === page }"
+        @click="page = n"
+      >{{ n }}</button>
+    </div>
   </div>
 </template>
 
@@ -89,17 +80,80 @@ onMounted(() => {
   margin: 1rem;
 }
 
-.table {
-  /* border: 1px solid gray; */
+.btn-create {
+  background-color: #005C53;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
   border-radius: 5px;
-}
-
-tbody > tr {
-  transition: 200ms;
   cursor: pointer;
+  transition: background-color 0.3s;
+  font-weight: bold;
 }
 
-tbody > tr:hover {
-  background-color: rgb(247, 250, 253);
+.btn-create:hover {
+  background-color: #005C53;
+}
+
+.table {
+  display: flex;
+  flex-direction: column;
+  border: 3px solid #D6D58E;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.table-header {
+  display: flex;
+  background-color: #D6D58E;
+  font-weight: bold;
+  padding: 10px 0;
+}
+
+.table-row {
+  display: flex;
+  border-bottom: 1px solid #dbdbdb;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.table-row:hover {
+  background-color: #DBF227;
+}
+
+.table-cell {
+  flex: 1;
+  padding: 10px;
+  text-align: left;
+}
+
+.table-cell:nth-child(1) {
+  flex: 2;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.page-btn {
+  background-color: transparent;
+  border: 1px solid #dbdbdb;
+  padding: 5px 10px;
+  margin: 0 5px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.page-btn:hover {
+  background-color: #DBF227;
+  color: black;
+}
+
+.page-btn.active {
+  background-color: #005C53;
+  color: white;
 }
 </style>

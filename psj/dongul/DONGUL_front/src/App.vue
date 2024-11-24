@@ -1,6 +1,8 @@
 <script setup>
 import Nav from '@/components/Nav.vue'
 import Footer from '@/components/Footer.vue'
+// import DarkMode from '@/components/DarkMode.vue'
+
 </script>
 
 <template>
@@ -9,6 +11,7 @@ import Footer from '@/components/Footer.vue'
       <Nav></Nav>
       <div class="hr"></div>
     </header>
+    <!-- <DarkMode></DarkMode> -->
     <RouterView />
     <Footer class="footer"/>
   </div>
@@ -33,4 +36,4 @@ import Footer from '@/components/Footer.vue'
 .color {
   color: #3CB371;
 }
-</style>
+</style>  

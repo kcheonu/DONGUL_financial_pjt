@@ -1,5 +1,7 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { usePostStore } from '@/stores/posts'
 import { useUserStore } from '@/stores/users'
 import { useVuelidate } from '@vuelidate/core'
 import { required, integer, helpers } from '@vuelidate/validators'
@@ -22,7 +24,14 @@ const months = [
 ]
 
 const userStore = useUserStore()
-const usernameTemp = userStore.userInfo.username
+const postStore = usePostStore()
+const route = useRoute()
+const router = useRouter()
+
+const queryPage = route.query?.page
+const page = ref(Number(queryPage) || 1)
+
+const myPosts = ref([])
 
 const rules = {
   updateValue: {
@@ -32,6 +41,22 @@ const rules = {
 }
 
 const v$ = useVuelidate(rules, state)
+
+const fetchMyPosts = async () => {
+  await postStore.getPosts(page.value)
+  myPosts.value = postStore.posts.filter(
+    (post) => post.user.username === userStore.userInfo.username
+  )
+}
+
+const clickTr = (postId) => {
+  router.push({ name: 'postDetail', params: { id: postId }, query: { page: page.value } })
+}
+
+watch(page, () => {
+  fetchMyPosts()
+  window.scrollTo({ left: 0, top: 0, behavior: 'smooth' })
+})
 
 onMounted(() => {
   const storeUserInfo = userStore.userInfo
@@ -48,11 +73,12 @@ onMounted(() => {
     '월 적금 희망 금액': storeUserInfo.desire_amount_saving,
     '적금 희망 기간 (월)': storeUserInfo.saving_period,
   }
+  fetchMyPosts()
 })
 
 const editValue = function (key, value) {
   selectedKey.value = key
-  state.value.updateValue = userInfo.value[key]
+  state.updateValue = userInfo.value[key]
   selectedMonth.value = value
   dialog.value = true
 }
@@ -65,171 +91,102 @@ const save = function () {
   v$.value.$validate()
 
   if (!v$.value.$error || selectedKey.value === '예금 희망 기간 (월)' || selectedKey.value === '적금 희망 기간 (월)') {
-    const key = ref('')
-    const body = ref(state.value.updateValue)
+    let key = ''
+    let body = state.updateValue
     if (selectedKey.value === '나이') {
-      key.value = 'age'
+      key = 'age'
     } else if (selectedKey.value === '자산') {
-      key.value = 'money'
+      key = 'money'
     } else if (selectedKey.value === '연봉') {
-      key.value = 'salary'
+      key = 'salary'
     } else if (selectedKey.value === '예금 희망 금액') {
-      key.value = 'desire_amount_deposit'
+      key = 'desire_amount_deposit'
     } else if (selectedKey.value === '예금 희망 기간 (월)') {
-      key.value = 'deposit_period'
-      body.value = selectedMonth.value
+      key = 'deposit_period'
+      body = selectedMonth.value
     } else if (selectedKey.value === '월 적금 희망 금액') {
-      key.value = 'desire_amount_saving'
+      key = 'desire_amount_saving'
     } else if (selectedKey.value === '적금 희망 기간 (월)') {
-      key.value = 'saving_period'
-      body.value = selectedMonth.value
+      key = 'saving_period'
+      body = selectedMonth.value
     }
 
     axios({
       method: 'put',
-      url: `${userStore.API_URL}/users/${usernameTemp}/info/`,
+      url: `${userStore.API_URL}/users/${userStore.userInfo.username}/info/`,
       headers: {
         Authorization: `Token ${userStore.token}`
       },
       data: {
-        [key.value]: body.value
+        [key]: body
       }
     })
-      .then((res) => {
-        userStore.getUserInfo(usernameTemp)
-        userInfo.value[selectedKey.value] = body.value
-        selectedKey.value = state.value.updateValue = ''
+      .then(() => {
+        userStore.getUserInfo(userStore.userInfo.username)
+        userInfo.value[selectedKey.value] = body
+        selectedKey.value = state.updateValue = ''
         selectedMonth.value = null
         dialog.value = false
       })
-      .catch((err) => {
-        console.log(err)
-      })
+      .catch((err) => console.log(err))
   }
 }
 
-const editProfileImg = function (event) {
-  if (isShowProfileInput.value === false) {
+const editProfileImg = function () {
+  if (!isShowProfileInput.value) {
     isShowProfileInput.value = true
   } else {
     axios({
       method: 'put',
-      url: `${userStore.API_URL}/users/${usernameTemp}/profile/`,
+      url: `${userStore.API_URL}/users/${userStore.userInfo.username}/profile/`,
       headers: {
         Authorization: `Token ${userStore.token}`,
-        "Content-Type": 'multipart/form-data'
+        'Content-Type': 'multipart/form-data',
       },
       data: {
-        'profile_img': image.value
-      }
+        profile_img: image.value,
+      },
     })
-      .then((res) => {
-        userStore.getUserInfo(usernameTemp)
+      .then(() => {
+        userStore.getUserInfo(userStore.userInfo.username)
         isShowProfileInput.value = false
       })
-      .catch((err) => {
-        console.log(err)
-      })
+      .catch((err) => console.log(err))
   }
 }
 </script>
 
 <template>
-  <div>
-    <h1><span class="color">{{ userStore.userInfo.name }}</span>님의 프로필 페이지</h1>
+  <div class="profile-page">
+    <h1 class="profile-title">어서오세요, <span class="color">{{ userStore.userInfo.nickname }}</span>님!</h1>
     <v-divider class="my-3"></v-divider>
 
-    <div v-if="userInfo" class="d-flex align-center justify-space-evenly warpper">
-      <div class="profile-img">
-        <div class="d-flex flex-column justify-center">
-          <v-avatar
-            size="300"
-            class="mb-5"
-          >
-            <v-img cover :src="`${userStore.API_URL}${userStore.userInfo.profile_img}`"></v-img>
-          </v-avatar>
-          <v-btn
-            variant="flat"
-            color="#1089FF"
-            @click.prevent="editProfileImg"
-          >
-            프로필 이미지 변경
-          </v-btn>
-          <v-file-input
-            v-show="isShowProfileInput"
-            accept="image/png, image/jpeg, image/bmp"
-            variant="underlined"
-            label="프로필 이미지"
-            v-model="image"
-            class="mt-4"
-          >
-          </v-file-input>
-        </div>
+    <div v-if="userInfo" class="profile-wrapper">
+      <div class="profile-image">
+        <v-avatar size="300">
+          <v-img cover :src="`${userStore.API_URL}${userStore.userInfo.profile_img}`"></v-img>
+        </v-avatar>
+        <v-btn class="btn-profile-edit" @click="editProfileImg">
+          프로필 이미지 변경
+        </v-btn>
+        <v-file-input
+          v-show="isShowProfileInput"
+          accept="image/png, image/jpeg, image/bmp"
+          variant="underlined"
+          label="프로필 이미지"
+          v-model="image"
+          class="mt-4"
+        />
       </div>
 
-      <div class="user-info">
-        <v-table>
-
-          <v-dialog v-model="dialog" width="400">
-            <v-card>
-              <v-card-title>
-                <span class="mx-2 font-weight-bold">정보 수정</span>
-              </v-card-title>
-
-              <v-card-text>
-                <v-select
-                  v-if="selectedKey === '예금 희망 기간 (월)' || selectedKey === '적금 희망 기간 (월)'"
-                  color="#1089FF"
-                  variant="outlined"
-                  :label="selectedKey"
-                  :items="months"
-                  item-text="title"
-                  item-value="value"
-                  v-model="selectedMonth"
-                ></v-select>
-
-                <v-text-field
-                  v-else
-                  type="number"
-                  color="#1089FF"
-                  variant="outlined"
-                  v-model="state.updateValue"
-                  :label="selectedKey"
-                  :error-messages="v$.updateValue.$errors.map(e => e.$message)"
-                  @input="v$.updateValue.$touch"
-                  @blur="v$.updateValue.$touch"
-                  @keypress.enter="save"
-                ></v-text-field>
-              </v-card-text>
-
-              <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn color="#1089FF" variant="text" @click="close">
-                  취소
-                </v-btn>
-                <v-btn color="#1089FF" variant="text" @click="save">
-                  수정
-                </v-btn>
-              </v-card-actions>
-            </v-card>
-          </v-dialog>
-
+      <div class="profile-info">
+        <v-table class="table">
           <tbody>
-            <tr
-              v-for="(value, key) in userInfo"
-              :key="key"
-            >
-              <td class="font-weight-bold">{{ key }}</td>
+            <tr v-for="(value, key) in userInfo" :key="key">
+              <td>{{ key }}</td>
               <td>{{ value }}</td>
               <td>
-                <v-icon
-                  v-if="key !== '회원번호' && key !== '아이디' && key !== '닉네임' && key !== '이메일'"
-                  size="small"
-                  class="me-2"
-                  @click="editValue(key, value)"
-                >
-                  mdi-pencil
-                </v-icon>
+                <v-icon v-if="key !== '회원번호'" @click="editValue(key, value)">mdi-pencil</v-icon>
               </td>
             </tr>
           </tbody>
@@ -237,18 +194,144 @@ const editProfileImg = function (event) {
       </div>
     </div>
 
-    <div v-else class="loading">
-      <v-progress-circular
-        color="#1089FF"
-        indeterminate
-        size="80"
-        ></v-progress-circular>
+    <!-- 수정 다이얼로그 -->
+    <v-dialog v-model="dialog" max-width="600">
+      <v-card>
+        <v-card-title>정보 수정</v-card-title>
+        <v-card-text>
+          <v-select
+            v-if="selectedKey === '예금 희망 기간 (월)' || selectedKey === '적금 희망 기간 (월)'"
+            color="#1089FF"
+            variant="outlined"
+            :label="selectedKey"
+            :items="months"
+            item-text="title"
+            item-value="value"
+            v-model="selectedMonth"
+          ></v-select>
+          <v-text-field
+            v-else
+            type="number"
+            color="#1089FF"
+            variant="outlined"
+            v-model="state.updateValue"
+            :label="selectedKey"
+            :error-messages="v$.updateValue.$errors.map(e => e.$message)"
+            @input="v$.updateValue.$touch"
+            @blur="v$.updateValue.$touch"
+            @keypress.enter="save"
+          ></v-text-field>
+        </v-card-text>
+        <v-card-actions>
+          <v-btn text color="#1089FF" @click="close">취소</v-btn>
+          <v-btn text color="#1089FF" @click="save">저장</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- 내가 쓴 글 목록 -->
+    <div class="my-posts">
+      <h2>내가 쓴 글 목록 ({{ myPosts.length }})</h2>
+      <div v-if="myPosts.length > 0">
+        <v-table class="table">
+          <tbody>
+            <tr v-for="post in myPosts" :key="post.id" @click="clickTr(post.id)" style="cursor: pointer;">
+              <td>{{ post.title }}</td>
+              <td>{{ post.created_at.slice(0,10) }}</td>
+            </tr>
+          </tbody>
+        </v-table>
+      </div>
+      <p v-else class="no-posts">아직 쓴 글이 없습니다.</p>
     </div>
+
   </div>
 </template>
 
 <style scoped>
-.warpper {
-  height: 600px;
+.profile-page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background-color: #042940;
+}
+
+.profile-title {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  color: white;
+}
+
+.profile-wrapper {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 2rem;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.profile-image {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.profile-input {
+  margin-top: 1rem;
+}
+
+.btn-profile-edit {
+  margin-top: 1rem;
+  background-color: #005C53;
+  color: white;
+}
+
+.profile-info {
+  flex: 1;
+  background-color: #042940;
+}
+
+/* 내가 쓴 글 목록 스타일 */
+.my-posts {
+  margin-top: 2rem;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.my-posts h2 {
+  color: white;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.table {
+  background-color: #042940;
+  color: white;
+}
+
+.table tr {
+  border-bottom: 1px solid #dbdbdb;
+}
+
+.table td {
+  padding: 10px;
+  text-align: left;
+}
+
+.table tr:hover {
+  background-color: #005C53;
+  cursor: pointer;
+}
+
+.no-posts {
+  color: white;
+  font-size: 1.2rem;
+  text-align: center;
+  margin-top: 1rem;
 }
 </style>
