@@ -6,7 +6,7 @@
   <div class="container">
     <div class="d-flex flex-column align-center">
       <img src="@/assets/error-404-page.png" alt="not-found" />
-      <h2>앗! <span class="color">페이지가</span> 없어요</h2>
+      <h2><span class="color">페이지를</span>찾을 수 없습니다.</h2>
       <v-btn color="#1089FF" :to="{ name: 'home' }">홈으로</v-btn>
     </div>
   </div>

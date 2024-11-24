@@ -46,7 +46,7 @@ def random_name():
 DP_URL = 'http://finlife.fss.or.kr/finlifeapi/depositProductsSearch.json'
 SP_URL = 'http://finlife.fss.or.kr/finlifeapi/savingProductsSearch.json'
 
-API_KEY = '16dd1959199940770f9f4793f549c2a0'
+API_KEY = 'db6d119bdb8c06afd652e4329d8bc648'
 
 contract_deposit = []
 contract_saving = []
@@ -91,8 +91,8 @@ while i < N:
     
     name_list.append(rn)
     i += 1
-
-    
+dp = ''
+sp = ''
 # 저장 위치는 프로젝트 구조에 맞게 수정합니다.
 save_dir = 'accounts/fixtures/accounts/user_data.json'
 with open(save_dir, 'w', encoding="utf-8") as f:
@@ -104,14 +104,14 @@ with open(save_dir, 'w', encoding="utf-8") as f:
         file["pk"] = i+1
         file["fields"] = {
             'username': 'test'+str(i), # 유저아이디 test1,2,3,4,5,6,7
-            'name': name_list[i],  # 유저 이름 랜덤 생성
+            'nickname': name_list[i],  # 유저 이름 랜덤 생성
             # 랜덤한 0~5개의 상품을 가입하도록 삽입됨
 
             # 'contract_deposit': [ DepositSerializer(random.choice(Deposits)).data for _ in range(random.randint(1, 2))], # 금융 상품 리스트
             # 'contract_saving': [ SavingSerializer(random.choice(Savings)).data for _ in range(random.randint(1, 3))], # 금융 상품 리스트
             
-            'contract_deposit': list(set([ random.randrange(1,38) for _ in range(2) ])) , # 금융 상품 리스트
-            'contract_saving': list(set([ random.randrange(1,62) for _ in range(random.randint(2, 3)) ])), # 금융 상품 리스트
+            'contract_deposit': list(set([ random.randrange(1,39) for _ in range(2) ])) , # 금융 상품 리스트
+            'contract_saving': list(set([ random.randrange(1,58) for _ in range(random.randint(2, 3)) ])), # 금융 상품 리스트
             # 'contract_deposit': '[' + ','.join([str(random.randrange(1,38)) for _ in range(random.randint(1, 2))]) + ']', # 금융 상품 리스트
             # 'contract_saving': '[' +','.join([str(random.randrange(1,62)) for _ in range(random.randint(1, 3))]) + ']', # 금융 상품 리스트
             'age': random.randint(20, 70),  # 나이

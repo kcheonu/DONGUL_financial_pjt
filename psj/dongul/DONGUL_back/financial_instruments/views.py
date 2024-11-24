@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Q, F
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes 
 from rest_framework.permissions import IsAuthenticated
@@ -385,61 +385,66 @@ def recommend_product_one(request):
 
     return Response(product_list)
 
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def recommend_product_two(request): 
-    age = request.user.age
-    money = request.user.money
-    salary = request.user.salary
-    standard_deviation_age = 6
-    standard_deviation_money = 1000000
-    standard_deviation_salary = 1000000
-    is_not_similar_users = False
+def recommend_product_two(request):
+    user = request.user
+    age, money, salary = user.age, user.money, user.salary
 
-    similar_users = User.objects.filter(
-        ~Q(username=request.user.username),
-        age__range=(age - standard_deviation_age, age + standard_deviation_age),
-        money__range=(money - standard_deviation_money, money + standard_deviation_money),
-        salary__range=(salary - standard_deviation_salary, salary + standard_deviation_salary)
-    )
+    # 나이에 따른 가중치 설정
+    if age < 30:
+        weight_age = 0.3
+        weight_salary = 0.5
+        weight_money = 0.2
+    elif 30 <= age <= 50:
+        weight_age = 0.3
+        weight_salary = 0.4
+        weight_money = 0.3
+    else:  # 50세 이상
+        weight_age = 0.3
+        weight_salary = 0.2
+        weight_money = 0.5
 
-    if not similar_users.exists():
-        is_not_similar_users = True
+    # 표준편차 설정 (데이터 범위 지정)
+    std_dev_age = 6
+    std_dev_money = 1_000_000
+    std_dev_salary = 1_000_000
+
+    # 유사도 계산: 가중치를 적용한 유클리드 거리
+    similar_users = User.objects.annotate(
+        similarity=(
+            weight_age * (F('age') - age) ** 2 +
+            weight_money * (F('money') - money) ** 2 / std_dev_money ** 2 +
+            weight_salary * (F('salary') - salary) ** 2 / std_dev_salary ** 2
+        )
+    ).filter(~Q(username=user.username)).order_by('similarity')[:100]
+
+    # 비슷한 사용자가 없을 경우 전체 유저 기반 추천
+    is_not_similar_users = not similar_users.exists()
+    if is_not_similar_users:
         similar_users = User.objects.all()
 
-    id_data = []
-
-    for similar_user in similar_users:
-        serializer = UserInfoSerializer(similar_user)
-        id_data.append(serializer.data["id"])
-
-    # print(len(id_data))
-
+    # 유사한 사용자들의 계약 데이터를 수집
     deposit_list = []
     saving_list = []
-    
-    for user_id in id_data:
-        user = User.objects.get(pk=user_id)
-        deposit_list.extend(user.contract_deposit.all())
-        saving_list.extend(user.contract_saving.all())
+
+    for similar_user in similar_users:
+        deposit_list.extend(similar_user.contract_deposit.all())
+        saving_list.extend(similar_user.contract_saving.all())
 
     # Counter를 사용하여 각 Deposit과 Saving 객체의 등장 횟수를 계산
     deposit_counter = Counter(deposit_list)
     saving_counter = Counter(saving_list)
-
 
     # 각 객체와 그 등장 횟수를 저장할 리스트
     deposit_result = []
     saving_result = []
 
     for deposit, count in deposit_counter.items():
-        # Deposit 객체의 정보와 등장 횟수를 딕셔너리로 저장
         deposit_info = {'deposit': DepositSerializer(deposit).data, 'count': count}
         deposit_result.append(deposit_info)
 
     for saving, count in saving_counter.items():
-        # Saving 객체의 정보와 등장 횟수를 딕셔너리로 저장
         saving_info = {'saving': SavingSerializer(saving).data, 'count': count}
         saving_result.append(saving_info)
 
@@ -447,7 +452,15 @@ def recommend_product_two(request):
     deposit_result = sorted(deposit_result, key=lambda x: x['count'], reverse=True)[:10]
     saving_result = sorted(saving_result, key=lambda x: x['count'], reverse=True)[:10]
 
-    result = {'is_not_similar_users': is_not_similar_users, 'deposit': deposit_result, 'saving': saving_result}
+    # 결과를 result에 저장
+    result = {
+        'is_not_similar_users': is_not_similar_users,
+        'deposit': deposit_result,
+        'saving': saving_result
+    }
 
+    # 디버깅을 위한 출력
+    print(result)
+
+    # result 반환
     return Response(result)
-

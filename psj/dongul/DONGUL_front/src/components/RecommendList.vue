@@ -134,7 +134,7 @@ const getDeposit = function () {
     .then((res) => {
       const data = res.data
       selectedDeposit.value = {
-        '가입자 수 (MYFI 기준)': data.contract_user.length,
+        '가입자 수 (DONGUL 기준)': data.contract_user.length,
         '공시 제출월': data['dcls_month'],
         '금융 회사명': data['kor_co_nm'],
         '금융 상품명': data['name'],

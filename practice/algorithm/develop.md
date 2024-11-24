@@ -124,16 +124,6 @@
 
 
 
-### 환율그래프 만들기
-
-- beautifulsoup4, selenium, chromedriver 설치
-- 웹 크롤링으로
-- [http](http://www.smbs.biz/ExRate/TodayExRate.jsp)
-- 위 사이트에서 환율 정보 긁어서 저장하기, 
-- 매일 08시 기준으로 데이터 확보(DB에 추가)
-- 저장해논 데이터를 토대로 그래프 그리기 (08시 갱신)
-
-
 ### 마지막 gpt와의 대화 내용
 해당 테이블 내용을 토대로 통화명별 그래프를 표현하고 싶어 - 프롬프트  
 ```python

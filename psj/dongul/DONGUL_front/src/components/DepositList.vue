@@ -2,7 +2,8 @@
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 import { useUserStore } from '@/stores/users'
-
+import { useRouter } from 'vue-router'
+import BarChartDetail from '@/components/BarChartDetail.vue'
 const headers = [
   { title: '금융회사명', align: 'start', sortable: true, key: 'kor_co_nm' },
   { title: '상품명', align: 'center', sortable: false, width: '32%', key: 'name' },
@@ -14,7 +15,18 @@ const headers = [
 
 const deposits = ref([]) // Filtered deposit list
 const depositLength = computed(() => deposits.value.length) // Total number of items
-
+const selectedDeposit = ref(null); // 초기화
+const selectedDepositSimple = ref()
+const selectedDepositCode = computed(() => {
+  return selectedDepositSimple.value?.['deposit_code']
+})
+const isContractDeposit = computed(() => {
+  return userStore.userInfo?.contract_deposit.some(e => e['deposit_code'] === selectedDepositCode.value)
+})
+const dialog = ref(false)
+const averageIntrRate = [3.45, 4.08, 3.4, 3.35]
+const intrRate = ref([null, null, null, null])
+const intrRate2 = ref([null, null, null, null])
 // Bank filter
 const bankOptions = ref([])
 const selectedBanks = ref([])
@@ -98,6 +110,98 @@ const toggleShowAllBanks = () => {
 onMounted(() => {
   getAllDeposit()
 })
+
+
+const close = function () {
+  dialog.value = false
+}
+
+const clickRow = async function (data) {
+  selectedDepositSimple.value = data;
+  intrRate.value = [];
+  intrRate2.value = [];
+  await getDeposit(); // 데이터 로드 대기
+  dialog.value = true; // 다이얼로그 열기
+};
+
+const getDeposit = function () {
+  axios({
+    method: 'get',
+    url: `${userStore.API_URL}/financial/deposit_list/${selectedDepositCode.value}/`
+  })
+    .then((res) => {
+      const data = res.data
+      selectedDeposit.value = {
+        '가입자 수 (DONGUL 기준)': data.contract_user.length,
+        '공시 제출월': data['dcls_month'],
+        '금융 회사명': data['kor_co_nm'],
+        '금융 상품명': data['name'],
+        '가입 방법': data['join_way'],
+        '만기 후 이자율': data['mtrt_int'],
+        '우대 조건': data['spcl_cnd'],
+        '가입 대상': data['join_member'],
+        '가입 제한': data['join_deny'] === 1 ? '제한없음' : data['join_deny'] === 2 ? '서민전용' : '일부제한',
+        '최고 한도': data['max_limit'],
+        '기타 유의사항': data['etc_note']
+      }
+      const optionList = res.data.depositoption_set
+
+      for (const option of optionList) {
+        if (option.save_trm === "6") {
+          intrRate.value[0] = option.intr_rate
+          intrRate2.value[0] = option.intr_rate2
+        } else if (option.save_trm === "12") {
+          intrRate.value[1] = option.intr_rate
+          intrRate2.value[1] = option.intr_rate2
+        } else if (option.save_trm === "24") {
+          intrRate.value[2] = option.intr_rate
+          intrRate2.value[2] = option.intr_rate2
+        } else if (option.save_trm === "36") {
+          intrRate.value[3] = option.intr_rate
+          intrRate2.value[3] = option.intr_rate2
+        }
+      }
+    })
+    .catch((err) => {
+      console.log(err)
+    })
+}
+
+const addDepositUser = function () {
+  axios({
+    method: 'post',
+    url: `${userStore.API_URL}/financial/deposit_list/${selectedDepositCode.value}/contract/`,
+    headers: {
+      Authorization: `Token ${userStore.token}`
+    }
+  })
+    .then((res) => {
+      userStore.getUserInfo(userStore.userInfo.username)
+      const answer = window.confirm('저장이 완료되었습니다.\n가입 상품 관리 페이지로 가시겠습니까?')
+      if (answer) {
+        router.push({ name: 'productManage', params: { username: userStore.userInfo.username }})
+      }
+    })
+    .catch((err) => {
+      console.log(err)
+    })
+}
+
+const deleteDepositUser = function () {
+  axios({
+    method: 'delete',
+    url: `${userStore.API_URL}/financial/deposit_list/${selectedDepositCode.value}/contract/`,
+    headers: {
+      Authorization: `Token ${userStore.token}`
+    }
+  })
+    .then((res) => {
+      userStore.getUserInfo(userStore.userInfo.username)
+    })
+    .catch((err) => {
+      console.log(err)
+    })
+}
 </script>
 
 <template>
@@ -167,6 +271,62 @@ onMounted(() => {
 
     <v-divider class="my-3"></v-divider>
 
+    <v-dialog v-model="dialog" width="800">
+      <v-card v-if="selectedDeposit" class="py-5 px-3">
+        <v-card-title class="d-flex align-center justify-space-between">
+          <h3>{{ selectedDeposit['금융 상품명'] }}</h3>
+          <div v-if="userStore.isLogin">
+            <v-btn
+              v-if=" isContractDeposit"
+              color="red"
+              variant="flat"
+              @click.prevent="deleteDepositUser"
+            >가입 취소하기</v-btn>
+            <v-btn
+              v-else
+              color="#1089FF"
+              variant="flat"
+              @click.prevent="addDepositUser"
+            >가입하기</v-btn>
+          </div>
+        </v-card-title>
+
+        <v-card-text>
+          <v-table>
+            <tbody>
+              <tr
+                v-for="(value, key) in selectedDeposit"
+                :key="key"
+              >
+                <td width="28%" class="font-weight-bold">{{ key }}</td>
+                <td v-if="key === '최고 한도'">{{ value?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") }}</td>
+                <td v-else>{{ value }}</td>
+              </tr>
+            </tbody>
+          </v-table>
+          <v-divider class="my-3"></v-divider>
+          <div class="mx-auto">
+            <BarChartDetail
+              :title="selectedDepositSimple.name"
+              :average-intr-rate="averageIntrRate"
+              :intr-rate="intrRate"
+              :intr-rate2="intrRate2"
+            />
+            <p class="text-caption">* 개월별 평균 예금 금리는 2024년 11월 기준입니다.</p>
+            <p class="text-caption">* 차트에 없는 이자율은 상품에 존재하지 않는 옵션입니다.</p>
+          </div>
+          
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="#1089FF" variant="text" @click="close">
+            닫기
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <!-- 데이터 테이블 -->
     <v-data-table-virtual
       v-if="depositLength !== 0"
@@ -175,11 +335,11 @@ onMounted(() => {
       :items-length="depositLength"
       :items="deposits"
       item-value="deposit_code"
-      height="600"
+      height="700"
       class="table elevation-6"
     >
       <template v-slot:item="{ item }">
-        <tr>
+        <tr @click="clickRow(item)">
           <td>{{ item.kor_co_nm }}</td>
           <td align="center">{{ item.name }}</td>
           <td align="center">{{ item['6month'] }}</td>
@@ -264,6 +424,10 @@ onMounted(() => {
   margin-top: 2rem;
 }
 
+.v-dialog {
+  z-index: 1050 !important; /* 다른 요소보다 위로 설정 */
+}
+
 /* 반응형 디자인 */
 @media (max-width: 768px) {
   .filter-category {
@@ -276,4 +440,6 @@ onMounted(() => {
     max-width: 100%;
   }
 }
+
+
 </style>

@@ -5,4 +5,5 @@ urlpatterns = [
     path('', views.index),
     path('load_latest_data/', views.latest_exchange_rates),
     path('selected_currencies/', views.selected_currencies),
+    path('make_data/', views.fetch_last_year_data),
 ]

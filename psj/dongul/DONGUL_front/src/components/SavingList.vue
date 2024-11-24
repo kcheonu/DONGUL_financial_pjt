@@ -1,8 +1,9 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import axios from 'axios'
+import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/users'
-
+import BarChartDetail from '@/components/BarChartDetail.vue'
 const headers = [
   { title: '금융회사명', align: 'start', sortable: true, key: 'kor_co_nm' },
   { title: '상품명', align: 'center', sortable: false, width: '32%', key: 'name' },
@@ -12,9 +13,12 @@ const headers = [
   { title: '36개월', align: 'center', width: '12%', key: '36month' },
 ]
 
+const results = ref()
 const savings = ref([]) // 전체 금융상품 리스트
 const filteredSavings = ref([]) // 필터링된 금융상품 리스트
-const savingLength = computed(() => filteredSavings.value.length) // 필터링된 금융상품 개수
+const savingLength = computed(() => {
+  return savings.value.length
+})
 
 // Bank filter
 const bankOptions = ref([])
@@ -31,12 +35,28 @@ const monthOptions = ref(['6개월', '12개월', '24개월', '36개월'])
 const selectedMonths = ref([])
 
 // Saving type filter (자유적립식 / 정액적립식)
+const selectedSaving = ref(null);
+const selectedSavingSimple = ref()
+const selectedTypeRsrv = ref('자유적립식')
 const savingTypes = ref(['자유적립식', '정액적립식'])
 const selectedSavingTypes = ref([]) // 자유/정액 적립식 선택
+const selectedSavingCode = computed(() => {
+  return selectedSavingSimple.value?.['saving_code']
+})
 
+const dialog = ref(false)
+
+const averageIntrRate = [2.78, 3.62, 3.57, 3.52]
+const intrRateF = ref([null, null, null, null])
+const intrRate2F = ref([null, null, null, null])
+const intrRateS = ref([null, null, null, null])
+const intrRate2S = ref([null, null, null, null])
+const isContractSaving = computed(() => {
+  return userStore.userInfo?.contract_saving.some(e => e['saving_code'] === selectedSavingCode.value)
+})
 // User store
 const userStore = useUserStore()
-
+const router = useRouter()
 // Create item structure
 const makeItems = (item) => ({
   saving_code: item.saving_code,
@@ -96,6 +116,130 @@ const toggleShowAllBanks = () => {
 onMounted(() => {
   getAllSavings()
 })
+
+watch(selectedTypeRsrv, () => {
+  savings.value = []
+  selectedBank.value = '전체 보기'
+  for (const item of results.value){
+    savings.value.push(makeItems(item))
+    if (!banks.value.includes(item['kor_co_nm'])) {
+      banks.value.push(item['kor_co_nm'])
+    }
+  }
+})
+
+const close = function () {
+  dialog.value = false
+}
+
+const clickRow = async function (data) {
+  // router.push({ name: 'savingDetail', params: { savingCode: data['saving_code']}})
+  selectedSavingSimple.value = data
+  intrRateF.value = []
+  intrRate2F.value = []
+  intrRateS.value = []
+  intrRate2S.value = []
+  await getSaving();
+  dialog.value = true
+}
+
+const getSaving = function () {
+  const savingCode = selectedSavingSimple.value['saving_code']
+  axios({
+    method: 'get',
+    url: `${userStore.API_URL}/financial/saving_list/${selectedSavingCode.value}/`
+  })
+    .then((res) => {
+      const data = res.data
+      selectedSaving.value = {
+        '가입자 수 (DONGUL 기준)': data.contract_user.length,
+        '공시 제출월': data['dcls_month'],
+        '금융 회사명': data['kor_co_nm'],
+        '금융 상품명': data['name'],
+        '가입 방법': data['join_way'],
+        '만기 후 이자율': data['mtrt_int'],
+        '우대 조건': data['spcl_cnd'],
+        '가입 대상': data['join_member'],
+        '가입 제한': data['join_deny'] === 1 ? '제한없음' : data['join_deny'] === 2 ? '서민전용' : '일부제한',
+        '최고 한도': data['max_limit'],
+        '기타 유의사항': data['etc_note']
+      }
+
+      const optionList = res.data.savingoption_set
+
+      for (const option of optionList) {
+        if (option.rsrv_type_nm === '자유적립식') {
+          if (option.save_trm === "6") {
+            intrRateF.value[0] = option.intr_rate
+            intrRate2F.value[0] = option.intr_rate2
+          } else if (option.save_trm === "12") {
+            intrRateF.value[1] = option.intr_rate
+            intrRate2F.value[1] = option.intr_rate2
+          } else if (option.save_trm === "24") {
+            intrRateF.value[2] = option.intr_rate
+            intrRate2F.value[2] = option.intr_rate2
+          } else if (option.save_trm === "36") {
+            intrRateF.value[3] = option.intr_rate
+            intrRate2F.value[3] = option.intr_rate2
+          }
+        } else {
+          if (option.save_trm === "6") {
+            intrRateS.value[0] = option.intr_rate
+            intrRate2S.value[0] = option.intr_rate2
+          } else if (option.save_trm === "12") {
+            intrRateS.value[1] = option.intr_rate
+            intrRate2S.value[1] = option.intr_rate2
+          } else if (option.save_trm === "24") {
+            intrRateS.value[2] = option.intr_rate
+            intrRate2S.value[2] = option.intr_rate2
+          } else if (option.save_trm === "36") {
+            intrRateS.value[3] = option.intr_rate
+            intrRate2S.value[3] = option.intr_rate2
+          }
+        }
+      }
+
+    })
+    .catch((err) => {
+      console.log(err)
+    })
+}
+
+const addSavingUser = function () {
+  axios({
+    method: 'post',
+    url: `${userStore.API_URL}/financial/saving_list/${selectedSavingCode.value}/contract/`,
+    headers: {
+      Authorization: `Token ${userStore.token}`
+    }
+  })
+    .then((res) => {
+      userStore.getUserInfo(userStore.userInfo.username)
+      const answer = window.confirm('저장이 완료되었습니다.\n가입 상품 관리 페이지로 가시겠습니까?')
+      if (answer) {
+        router.push({ name: 'productManage', params: { username: userStore.userInfo.username }})
+      }
+    })
+    .catch((err) => {
+      console.log(err)
+    })
+}
+
+const deleteSavingUser = function () {
+  axios({
+    method: 'delete',
+    url: `${userStore.API_URL}/financial/saving_list/${selectedSavingCode.value}/contract/`,
+    headers: {
+      Authorization: `Token ${userStore.token}`
+    }
+  })
+    .then((res) => {
+      userStore.getUserInfo(userStore.userInfo.username)
+    })
+    .catch((err) => {
+      console.log(err)
+    })
+}
 </script>
 
 <template>
@@ -167,6 +311,68 @@ onMounted(() => {
 
     <v-divider class="my-3"></v-divider>
 
+    <v-dialog v-model="dialog" width="800">
+      <v-card v-if="selectedSaving" class="py-5 px-3">
+        <v-card-title class="d-flex align-center justify-space-between">
+          <h3>{{ selectedSaving['금융 상품명'] }}</h3>
+          <div v-if="userStore.isLogin">
+            <v-btn
+              v-if="isContractSaving"
+              color="red"
+              variant="flat"
+              @click.prevent="deleteSavingUser"
+            >가입 취소하기</v-btn>
+            <v-btn
+              v-else
+              color="#1089FF"
+              variant="flat"
+              @click.prevent="addSavingUser"
+            >가입하기</v-btn>
+          </div>
+        </v-card-title>
+
+        <v-card-text>
+          <v-table>
+            <tbody>
+              <tr
+                v-for="(value, key) in selectedSaving"
+                :key="key"
+              >
+                <td width="28%" class="font-weight-bold">{{ key }}</td>
+                <td v-if="key === '최고 한도'">{{ value?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") }}</td>
+                <td v-else>{{ value }}</td>
+              </tr>
+            </tbody>
+          </v-table>
+          <v-divider class="my-3"></v-divider>
+
+          <div class="mx-auto">
+            <BarChartDetail
+              :title="`${selectedSavingSimple.name} (자유적립식)`"
+              :average-intr-rate="averageIntrRate"
+              :intr-rate="intrRateF"
+              :intr-rate2="intrRate2F"
+            />
+            <BarChartDetail
+              :title="`${selectedSavingSimple.name} (정액적립식)`"
+              :average-intr-rate="averageIntrRate"
+              :intr-rate="intrRateS"
+              :intr-rate2="intrRate2S"
+            />
+            <p class="text-caption">* 개월별 평균 예금 금리는 2023년 11월 기준입니다.</p>
+            <p class="text-caption">* 차트에 없는 이자율은 상품에 존재하지 않는 옵션입니다.</p>
+          </div>
+
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="#1089FF" variant="text" @click="close">
+            닫기
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <!-- 데이터 테이블 -->
     <v-data-table-virtual
       v-if="savingLength !== 0"
@@ -175,11 +381,11 @@ onMounted(() => {
       :items-length="savingLength"
       :items="filteredSavings"
       item-value="saving_code"
-      height="600"
+      height="700"
       class="table elevation-6"
     >
       <template v-slot:item="{ item }">
-        <tr>
+        <tr @click="clickRow(item)">
           <td>{{ item.kor_co_nm }}</td>
           <td align="center">{{ item.name }}</td>
           <td align="center">{{ item['6month'] }}</td>
@@ -247,6 +453,10 @@ onMounted(() => {
   border: 1px solid #ccc;
   border-radius: 4px;
   margin-bottom: 1rem;
+}
+
+.v-dialog {
+  z-index: 1050 !important; /* 다른 요소보다 위로 설정 */
 }
 
 .no-data {

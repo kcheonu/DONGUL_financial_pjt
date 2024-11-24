@@ -18,10 +18,10 @@ const headers = [
   { title: '공시 제출일', align: 'start', sortable: false, width:'11%',key: 'dcls_month' },
   { title: '금융회사명', align: 'start', sortable: false, key: 'kor_co_nm' },
   { title: '상품명', align: 'center', sortable: false, width:'27%', key: 'name' },
-  { title: '6개월 (Click to sort)', align: 'end', width:'11%', key: '6month' },
-  { title: '12개월 (Click to sort)', align: 'end', width:'11%', key: '12month' },
-  { title: '24개월 (Click to sort)', align: 'end',  width:'11%', key: '24month' },
-  { title: '36개월 (Click to sort)', align: 'end', width:'11%', key: '36month' },
+  { title: '6개월', align: 'center', width:'11%', key: '6month' },
+  { title: '12개월', align: 'center', width:'11%', key: '12month' },
+  { title: '24개월', align: 'center',  width:'11%', key: '24month' },
+  { title: '36개월', align: 'center', width:'11%', key: '36month' },
 ]
 
 const recommend1 = ref([]) // 희망 예치 금액, 기간과 비슷한 상품 추천
@@ -189,7 +189,7 @@ const getProduct = function () {
     .then((res) => {
       const data = res.data
       selectedProduct.value = {
-        '가입자 수 (MYFI 기준)': data.contract_user.length,
+        '가입자 수 (DONGUL 기준)': data.contract_user.length,
         '공시 제출월': data['dcls_month'],
         '금융 회사명': data['kor_co_nm'],
         '금융 상품명': data['name'],
@@ -328,6 +328,48 @@ const deleteProductUser = function (data) {
   
 }
 
+const selectedBank2 = ref('') // 선택된 은행
+const selectedBank1 = ref('') // 선택된 은행
+const uniqueBanks2 = computed(() => {
+  // 추천 리스트(recommend2)에서 고유한 은행 이름 추출
+  return [...new Set(recommend2.value.map(item => item['kor_co_nm']))]
+})
+const uniqueBanks1 = computed(() => {
+  // 추천 리스트(recommend2)에서 고유한 은행 이름 추출
+  return [...new Set(recommend1.value.map(item => item['kor_co_nm']))]
+})
+// 추천 리스트를 선택된 은행에 따라 정렬
+const sortedRecommend2 = computed(() => {
+  if (!selectedBank2.value) return recommend2.value // 선택된 은행이 없으면 정렬하지 않음
+  return recommend2.value.sort((a, b) => {
+    const isSelectedA = a['kor_co_nm'] === selectedBank2.value
+    const isSelectedB = b['kor_co_nm'] === selectedBank2.value
+    if (isSelectedA && !isSelectedB) return -1
+    if (!isSelectedA && isSelectedB) return 1
+    return 0
+  })
+})
+
+const sortedRecommend1 = computed(() => {
+  if (!selectedBank1.value) return recommend1.value // 선택된 은행이 없으면 정렬하지 않음
+  return recommend1.value.sort((a, b) => {
+    const isSelectedA = a['kor_co_nm'] === selectedBank1.value
+    const isSelectedB = b['kor_co_nm'] === selectedBank1.value
+    if (isSelectedA && !isSelectedB) return -1
+    if (!isSelectedA && isSelectedB) return 1
+    return 0
+  })
+})
+
+// 선택한 은행 변경 처리
+const handleBankChange2 = (bank) => {
+  selectedBank2.value = bank
+}
+// 선택한 은행 변경 처리
+const handleBankChange1 = (bank) => {
+  selectedBank1.value = bank
+}
+
 </script>
 
 <template>
@@ -337,7 +379,7 @@ const deleteProductUser = function (data) {
 
     <div v-if="!isExistInfo" class="d-flex flex-column justify-center align-center">
       <img src="@/assets/question-mark.png" alt="sorry" width="400" height="400"/>
-      <h1><span class="color">회원정보</span>가 있어야 추천이 가능합니다 😂</h1>
+      <h1><span class="color">회원정보</span>가 있어야 추천상품 조회가 가능합니다.</h1>
       <h1>회원 정보 관리 페이지에서 <span class="color">입력하지 않은 회원 정보</span>를 입력해주세요!</h1>
     </div>
 
@@ -356,7 +398,7 @@ const deleteProductUser = function (data) {
               >가입 취소하기</v-btn>
               <v-btn
                 v-else
-                color="#1089FF"
+                color="#3CB371"
                 variant="flat"
                 @click.prevent="addSavingUser"
               >가입하기</v-btn>
@@ -386,7 +428,7 @@ const deleteProductUser = function (data) {
                   :intr-rate="intrRateDeposit"
                   :intr-rate2="intrRate2Deposit"
                 />
-                <p class="text-caption">* 개월별 평균 예금 금리는 2023년 11월 기준입니다.</p>
+                <p class="text-caption">* 개월별 평균 예금 금리는 2024년 11월 기준입니다.</p>
                 <p class="text-caption">* 차트에 없는 이자율은 상품에 존재하지 않는 옵션입니다.</p>
               </div>
 
@@ -403,7 +445,7 @@ const deleteProductUser = function (data) {
                   :intr-rate="intrRateS"
                   :intr-rate2="intrRate2S"
                 />
-                <p class="text-caption">* 개월별 평균 예금 금리는 2023년 11월 기준입니다.</p>
+                <p class="text-caption">* 개월별 평균 예금 금리는 2024년 11월 기준입니다.</p>
                 <p class="text-caption">* 차트에 없는 이자율은 상품에 존재하지 않는 옵션입니다.</p>
               </div>
             </div>
@@ -412,7 +454,7 @@ const deleteProductUser = function (data) {
 
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn color="#1089FF" variant="text" @click="close">
+            <v-btn color="#3CB371" variant="text" @click="close">
               닫기
             </v-btn>
           </v-card-actions>
@@ -421,54 +463,79 @@ const deleteProductUser = function (data) {
 
 
       <v-card class="elevation-6">
-      <v-tabs
-        grow
-        v-model="tab"
-        color="#1089FF"
-        align-tabs="center"
-      >
-        <v-tab value="one">나와 비슷한 사람들이 많이 가입한 상품 추천</v-tab>
-        <v-tab value="two">희망 예치 금액, 기간과 비슷한 상품 추천</v-tab>
-      </v-tabs>
+        <v-tabs
+          v-model="tab"
+          color="#3CB371"
+          align-tabs="center"
+          class="equal-tabs"
+        >
+          <v-tab value="one">{{ userStore.userInfo.name }}님과 비슷한 사람들이 많이 가입했어요.</v-tab>
+          <v-tab value="two">{{ userStore.userInfo.name }}님과 희망 예치 금액, 기간이 비슷한 사람들이 많이 가입했어요</v-tab>
+        </v-tabs>
 
       <v-card-text>
         <v-window v-model="tab">
 
           <v-window-item value="one">
-            <p>⭐️ 나와 나이, 자산, 연봉이 비슷한 유저들이 가입한 상품들을 추천해드립니다!</p>
+            <h4>나이가 어릴 수록 자산보다 연봉이 우선순위가 더 높습니다!</h4>
+            <h4>나이, 자산, 연봉이 비슷한 유저들이 가입한 상품들을 추천해드립니다!</h4>
             <p
               v-if="isNotSimilarUsers"
               class="ml-5"
             ><br>아쉽게도 내 나이, 자산, 연봉과 비슷한 유저가 없어요 🥲<br>대신 모든 유저들이 많이 가입한 상품 top 20을 준비했습니다!</p>
+            <br>
 
+            <!-- 은행 선택 드롭다운 -->
+            <v-select
+              v-model="selectedBank2"
+              :items="uniqueBanks2"
+              label="선호 은행 선택"
+              variant="outlined"
+              color="#3CB371"
+              @change="handleBankChange2"
+            ></v-select>
+
+            <!-- 추천 리스트 -->
             <v-data-table-virtual
               :headers="headers"
               fixed-header
-              :items="recommend2"
+              :items="sortedRecommend2"
               item-value="code"
               height="600"
             >
-            <template v-slot:item="{ item }">
-              <tr @click="clickRow(item)">
-                <td>{{ item['type'] }}</td>
-                <td>{{ item['dcls_month'] }}</td>
-                <td>{{ item['kor_co_nm'] }}</td>
-                <td align="center">{{ item['name'] }}</td>
-                <td align="center">{{ item['6month'] }}</td>
-                <td align="center">{{ item['12month'] }}</td>
-                <td align="center">{{ item['24month'] }}</td>
-                <td align="center">{{ item['36month'] }}</td>
-              </tr>
-            </template>
+              <template v-slot:item="{ item }">
+                <tr @click="clickRow(item)">
+                  <td>{{ item['type'] }}</td>
+                  <td>{{ item['dcls_month'] }}</td>
+                  <td>{{ item['kor_co_nm'] }}</td>
+                  <td align="center">{{ item['name'] }}</td>
+                  <td align="center">{{ item['6month'] }}</td>
+                  <td align="center">{{ item['12month'] }}</td>
+                  <td align="center">{{ item['24month'] }}</td>
+                  <td align="center">{{ item['36month'] }}</td>
+                </tr>
+              </template>
             </v-data-table-virtual>
           </v-window-item>
 
           <v-window-item value="two">
-            <p>⭐️ 희망 예치 금액, 기간에서 ±50% 이내인 상품들 중, 이자율이 높은 상품을 추천해드립니다!</p>
+            <h4>희망 예치 금액, 기간에서 ±50% 이내인 상품들 중, 이자율이 높은 상품을 추천해드립니다!</h4>
+            <br>
+            <!-- 은행 선택 드롭다운 -->
+            <v-select
+              v-model="selectedBank1"
+              :items="uniqueBanks1"
+              label="선호 은행 선택"
+              variant="outlined"
+              color="#3CB371"
+              @change="handleBankChange1"
+            ></v-select>
+
+            <!-- 추천 리스트 -->
             <v-data-table-virtual
               :headers="headers"
               fixed-header
-              :items="recommend1"
+              :items="sortedRecommend1"
               item-value="code"
               height="600"
             >
@@ -494,7 +561,7 @@ const deleteProductUser = function (data) {
 
     <div v-else class="loading">
       <v-progress-circular
-        color="#1089FF"
+        color="#3CB371"
         indeterminate
         size="80"
         ></v-progress-circular>
@@ -523,5 +590,17 @@ tbody > tr {
 tbody > tr:hover {
   background-color: rgb(247, 250, 253);
   color: #3CB371;
+}
+
+.equal-tabs {
+  display: flex;
+}
+
+.equal-tabs > .v-tab {
+  flex: 1; /* 두 탭이 동일한 비율로 나뉘도록 설정 */
+  text-align: center; /* 텍스트 중앙 정렬 */
+  white-space: nowrap; /* 텍스트가 줄바꿈되지 않도록 설정 */
+  overflow: hidden; /* 텍스트가 너무 길 경우 넘침 처리 */
+  text-overflow: ellipsis; /* 넘친 텍스트에 ... 표시 */
 }
 </style>

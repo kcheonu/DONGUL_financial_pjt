@@ -14,6 +14,17 @@ const state = ref({
   updateValue: ''
 })
 const selectedMonth = ref()
+const preferredBank = ref('') // 선호 은행
+const banks = [
+  'KB국민은행',
+  '신한은행',
+  '하나은행',
+  '우리은행',
+  'NH농협은행',
+  '카카오뱅크',
+  '토스뱅크',
+] // 예시 은행 리스트
+
 const months = [
   { title: '6개월', value: 6 },
   { title: '12개월', value: 12 },
