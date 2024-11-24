@@ -37,7 +37,7 @@ const chartOptions = ref({
   plugins: {
     title: {
       display: true,
-      text: `${userStore.userInfo.name}님의 가입한 상품 금리`
+      text: `${userStore.userInfo.nickname}님의 가입한 상품 금리`
     },
   },
   responsive: true,

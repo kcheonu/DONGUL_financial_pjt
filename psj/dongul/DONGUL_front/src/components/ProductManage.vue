@@ -325,7 +325,7 @@ const deleteProductUser = function (data) {
 
 <template>
   <div>
-    <h1><span class="color">{{ userStore.userInfo.name }}</span>님의 가입 상품 관리 페이지</h1>
+    <h1><span class="color">{{ userStore.userInfo.nickname }}</span>님의 가입 상품 관리 페이지</h1>
     <v-divider class="my-3"></v-divider>
 
     <v-dialog v-model="dialog" width="800">
@@ -365,7 +365,7 @@ const deleteProductUser = function (data) {
                 :intr-rate="intrRateDeposit"
                 :intr-rate2="intrRate2Deposit"
               />
-              <p class="text-caption">* 개월별 평균 예금 금리는 2023년 11월 기준입니다.</p>
+              <p class="text-caption">* 개월별 평균 예금 금리는 2024년 11월 기준입니다.</p>
             </div>
 
             <div v-else class="mx-auto">
@@ -381,7 +381,7 @@ const deleteProductUser = function (data) {
                 :intr-rate="intrRateS"
                 :intr-rate2="intrRate2S"
               />
-              <p class="text-caption">* 개월별 평균 예금 금리는 2023년 11월 기준입니다.</p>
+              <p class="text-caption">* 개월별 평균 예금 금리는 2024년 11월 기준입니다.</p>
             </div>
           </div>
           
@@ -427,7 +427,7 @@ const deleteProductUser = function (data) {
               @click.prevent="deleteProductUser(product)"
             >가입 취소하기</v-btn>
           </p>
-          <p v-else class="mb-15">MIFI에서 가입한 상품이 없습니다! 금리 비교 탭에서 마음에 드는 상품을 선택해보세요 😊</p>
+          <p v-else class="mb-15">가입한 상품이 없네요. 금리 비교를 통해 상품에 가입하시겠어요?</p>
         </v-col>
       </v-row>
 
@@ -452,7 +452,7 @@ const deleteProductUser = function (data) {
             :intr-rate="intrRate"
             :intr-rate2="intrRate2"
           />
-          <p class="text-caption">* 개월별 평균 금리는 2023년 11월 기준입니다.</p>
+          <p class="text-caption">* 개월별 평균 금리는 2024년 11월 기준입니다.</p>
         </v-col>
         <v-col v-else cols="9" style="height: 405px;">
 
@@ -489,6 +489,6 @@ tbody > tr {
 
 tbody > tr:hover {
   background-color: rgb(247, 250, 253);
-  color: #3CB371;
+  color: #1089FF;
 }
 </style>
