@@ -5,7 +5,7 @@ const userStore = useUserStore()
 </script>
 
 <template>
-  <div>
+  <div class="main-container">
     <v-carousel
       cycle
       hide-delimiters
@@ -72,13 +72,59 @@ const userStore = useUserStore()
 </template>
 
 <style scoped>
-.carousel-container {
-  width: 60%; /* 화면 너비의 60% */
+/* 메인 컨테이너에 상단 여백 추가 */
+.main-container {
+  padding-top: 100px; /* 네비게이션 바 높이 + 여유 공간 */
+  background-color: #fff; /* 전체 배경 설정 */
+}
+
+/* 캐러솔 스타일 */
+.v-carousel {
+  background-color: #ceb424;
+  border-bottom: 1px solid #ceb424;
+  width: 70%; /* 화면 너비의 70% */
   margin: 0 auto; /* 중앙 정렬 */
 }
 
-.v-carousel {
-  border-bottom: 1px solid #DBDBDB;
+.caro-item-text {
+  position: absolute;
+  top: 26%;
+  left: 5%;
+}
+
+.item3 {
+  position: absolute;
+  top: 26%;
+  left: 5%;
+}
+
+.caro-item-img {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  right: 5%;
+}
+
+@media (max-width: 1250px) {
+  .caro-item-img {
+    right: 3%;
+  }
+
+  .caro-item-text,
+  .item3 {
+    left: 3%;
+  }
+}
+
+@media (min-width: 1600px) {
+  .caro-item-img {
+    right: 7%;
+  }
+
+  .caro-item-text,
+  .item3 {
+    left: 7%;
+  }
 }
 
 .caro-item-text {
