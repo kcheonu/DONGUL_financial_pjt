@@ -6,14 +6,14 @@ from .models import Post, Comment
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
-        fields = ('username', 'name', 'profile_img')
+        fields = ('username', 'nickname', 'profile_img')
 
 
 class PostListSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     class Meta:
         model = Post
-        fields = ('id', 'title', 'user')
+        fields = '__all__'
 
 
 class PostSerializer(serializers.ModelSerializer):
