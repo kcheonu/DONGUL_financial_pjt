@@ -3,7 +3,6 @@ import { ref } from 'vue'
 import { useUserStore } from '@/stores/users'
 
 const userStore = useUserStore()
-
 </script>
 
 <template>
@@ -20,9 +19,11 @@ const userStore = useUserStore()
 </template>
 
 <style scoped>
+/* 컨테이너 스타일 수정: 상단 여백 추가 */
 .container {
   width: 1000px;
   margin: 2rem auto;
+  padding-top: 100px; /* 네비게이션 바 높이 + 여유 공간 */
 }
 
 a.active {

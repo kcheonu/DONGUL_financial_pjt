@@ -5,18 +5,18 @@ import axios from 'axios'
 
 const currencies = ref()
 const response = ref()
-const selectedState = ref('송금 받으실 때')
+const selectedState = ref('송금 받을 때')
 const selectedCurrency = ref('미국 달러')
 const selectedCurrencyUnit = ref('USD')
-const selectedTtb = ref() // ttb: 송금 받으실 때
-const selectedTts = ref() // tts: 송금 보내실 때
+const selectedTtb = ref() // ttb: 송금 받을 때
+const selectedTts = ref() // tts: 송금 보낼 때
 const selectedDeal = ref() // deal_bas_r : 매매 기준율
 
 const calculateVariable = ref()
 const krwInput = ref()
 const otherInput = ref()
 
-const states = ['송금 받으실 때', '송금 보내실 때', '매매 기준율']
+const states = ['송금 받을 때', '송금 보낼 때', '매매 기준율']
 
 const userStore = useUserStore()
 
@@ -55,9 +55,9 @@ watch(selectedCurrency, () => {
     selectedTts.value = Number(selectedInfo['tts'].replaceAll(',', ''))
     selectedDeal.value = Number(selectedInfo['deal_bas_r'].replaceAll(',', ''))
   }
-  if (selectedState.value === '송금 받으실 때') {
+  if (selectedState.value === '송금 받을 때') {
     calculateVariable.value = selectedTtb.value
-  } else if (selectedState.value === '송금 보내실 때') {
+  } else if (selectedState.value === '송금 보낼 때') {
     calculateVariable.value = selectedTts.value
   } else {
     calculateVariable.value = selectedDeal.value
@@ -67,9 +67,9 @@ watch(selectedCurrency, () => {
 })
 
 watch(selectedState, () => {
-  if (selectedState.value === '송금 받으실 때') {
+  if (selectedState.value === '송금 받을 때') {
     calculateVariable.value = selectedTtb.value
-  } else if (selectedState.value === '송금 보내실 때') {
+  } else if (selectedState.value === '송금 보낼 때') {
     calculateVariable.value = selectedTts.value
   } else {
     calculateVariable.value = selectedDeal.value

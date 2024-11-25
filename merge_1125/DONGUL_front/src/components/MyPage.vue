@@ -28,6 +28,8 @@ const postStore = usePostStore()
 const route = useRoute()
 const router = useRouter()
 
+const usernameTemp = userStore.userInfo.username
+
 const queryPage = route.query?.page
 const page = ref(Number(queryPage) || 1)
 
@@ -91,24 +93,24 @@ const save = function () {
   v$.value.$validate()
 
   if (!v$.value.$error || selectedKey.value === '예금 희망 기간 (월)' || selectedKey.value === '적금 희망 기간 (월)') {
-    let key = ''
-    let body = state.updateValue
+    const key = ref('')
+    const body = ref(state.value.updateValue)
     if (selectedKey.value === '나이') {
-      key = 'age'
+      key.value = 'age'
     } else if (selectedKey.value === '자산') {
-      key = 'money'
+      key.value = 'money'
     } else if (selectedKey.value === '연봉') {
-      key = 'salary'
+      key.value = 'salary'
     } else if (selectedKey.value === '예금 희망 금액') {
-      key = 'desire_amount_deposit'
+      key.value = 'desire_amount_deposit'
     } else if (selectedKey.value === '예금 희망 기간 (월)') {
-      key = 'deposit_period'
-      body = selectedMonth.value
+      key.value = 'deposit_period'
+      body.value = selectedMonth.value
     } else if (selectedKey.value === '월 적금 희망 금액') {
-      key = 'desire_amount_saving'
+      key.value = 'desire_amount_saving'
     } else if (selectedKey.value === '적금 희망 기간 (월)') {
-      key = 'saving_period'
-      body = selectedMonth.value
+      key.value = 'saving_period'
+      body.value = selectedMonth.value
     }
 
     axios({
@@ -118,40 +120,43 @@ const save = function () {
         Authorization: `Token ${userStore.token}`
       },
       data: {
-        [key]: body
+        [key.value]: body.value
       }
     })
-      .then(() => {
-        userStore.getUserInfo(userStore.userInfo.username)
-        userInfo.value[selectedKey.value] = body
-        selectedKey.value = state.updateValue = ''
+    .then((res) => {
+        userStore.getUserInfo(usernameTemp)
+        userInfo.value[selectedKey.value] = body.value
+        selectedKey.value = state.value.updateValue = ''
         selectedMonth.value = null
         dialog.value = false
       })
-      .catch((err) => console.log(err))
+      .catch((err) => {
+        console.log(err)
+      })
   }
 }
-
-const editProfileImg = function () {
-  if (!isShowProfileInput.value) {
+const editProfileImg = function (event) {
+  if (isShowProfileInput.value === false) {
     isShowProfileInput.value = true
   } else {
     axios({
       method: 'put',
-      url: `${userStore.API_URL}/users/${userStore.userInfo.username}/profile/`,
+      url: `${userStore.API_URL}/users/${usernameTemp}/profile/`,
       headers: {
         Authorization: `Token ${userStore.token}`,
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": 'multipart/form-data'
       },
       data: {
-        profile_img: image.value,
-      },
+        'profile_img': image.value
+      }
     })
-      .then(() => {
-        userStore.getUserInfo(userStore.userInfo.username)
+      .then((res) => {
+        userStore.getUserInfo(usernameTemp)
         isShowProfileInput.value = false
       })
-      .catch((err) => console.log(err))
+      .catch((err) => {
+        console.log(err)
+      })
   }
 }
 </script>

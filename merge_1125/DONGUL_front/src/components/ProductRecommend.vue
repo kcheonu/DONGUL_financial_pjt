@@ -18,10 +18,10 @@ const headers = [
   { title: '공시 제출일', align: 'start', sortable: false, width:'11%',key: 'dcls_month' },
   { title: '금융회사명', align: 'start', sortable: false, key: 'kor_co_nm' },
   { title: '상품명', align: 'center', sortable: false, width:'27%', key: 'name' },
-  { title: '6개월 (Click to sort)', align: 'end', width:'11%', key: '6month' },
-  { title: '12개월 (Click to sort)', align: 'end', width:'11%', key: '12month' },
-  { title: '24개월 (Click to sort)', align: 'end',  width:'11%', key: '24month' },
-  { title: '36개월 (Click to sort)', align: 'end', width:'11%', key: '36month' },
+  { title: '6개월', align: 'center', width:'11%', key: '6month' },
+  { title: '12개월', align: 'center', width:'11%', key: '12month' },
+  { title: '24개월', align: 'center',  width:'11%', key: '24month' },
+  { title: '36개월', align: 'center', width:'11%', key: '36month' },
 ]
 
 const recommend1 = ref([]) // 희망 예치 금액, 기간과 비슷한 상품 추천
@@ -328,6 +328,48 @@ const deleteProductUser = function (data) {
   
 }
 
+const selectedBank1 = ref('') // 선택된 은행
+const uniqueBanks1 = computed(() => {
+  // 추천 리스트(recommend2)에서 고유한 은행 이름 추출
+  return [...new Set(recommend1.value.map(item => item['kor_co_nm']))]
+})
+// 추천 리스트를 선택된 은행에 따라 정렬
+const sortedRecommend1 = computed(() => {
+  if (!selectedBank1.value) return recommend1.value // 선택된 은행이 없으면 정렬하지 않음
+  return recommend1.value.sort((a, b) => {
+    const isSelectedA = a['kor_co_nm'] === selectedBank1.value
+    const isSelectedB = b['kor_co_nm'] === selectedBank1.value
+    if (isSelectedA && !isSelectedB) return -1
+    if (!isSelectedA && isSelectedB) return 1
+    return 0
+  })
+})
+
+const selectedBank2 = ref('') // 선택된 은행
+const uniqueBanks2 = computed(() => {
+  // 추천 리스트(recommend2)에서 고유한 은행 이름 추출
+  return [...new Set(recommend2.value.map(item => item['kor_co_nm']))]
+})
+
+// 추천 리스트를 선택된 은행에 따라 정렬
+const sortedRecommend2 = computed(() => {
+  if (!selectedBank2.value) return recommend2.value // 선택된 은행이 없으면 정렬하지 않음
+  return recommend2.value.sort((a, b) => {
+    const isSelectedA = a['kor_co_nm'] === selectedBank2.value
+    const isSelectedB = b['kor_co_nm'] === selectedBank2.value
+    if (isSelectedA && !isSelectedB) return -1
+    if (!isSelectedA && isSelectedB) return 1
+    return 0
+  })
+})
+// 선택한 은행 변경 처리
+const handleBankChange1 = (bank) => {
+  selectedBank2.value = bank
+}
+const handleBankChange2 = (bank) => {
+  selectedBank2.value = bank
+}
+
 </script>
 
 <template>
@@ -386,7 +428,7 @@ const deleteProductUser = function (data) {
                   :intr-rate="intrRateDeposit"
                   :intr-rate2="intrRate2Deposit"
                 />
-                <p class="text-caption">* 개월별 평균 예금 금리는 2023년 11월 기준입니다.</p>
+                <p class="text-caption">* 개월별 평균 예금 금리는 2024년 11월 기준입니다.</p>
                 <p class="text-caption">* 차트에 없는 이자율은 상품에 존재하지 않는 옵션입니다.</p>
               </div>
 
@@ -403,7 +445,7 @@ const deleteProductUser = function (data) {
                   :intr-rate="intrRateS"
                   :intr-rate2="intrRate2S"
                 />
-                <p class="text-caption">* 개월별 평균 예금 금리는 2023년 11월 기준입니다.</p>
+                <p class="text-caption">* 개월별 평균 예금 금리는 2024년 11월 기준입니다.</p>
                 <p class="text-caption">* 차트에 없는 이자율은 상품에 존재하지 않는 옵션입니다.</p>
               </div>
             </div>
@@ -435,19 +477,32 @@ const deleteProductUser = function (data) {
         <v-window v-model="tab">
 
           <v-window-item value="one">
-            <p>⭐️ 나와 나이, 자산, 연봉이 비슷한 유저들이 가입한 상품들을 추천해드립니다!</p>
+            <p>{{ userStore.userInfo.name }}님과 나이, 자산, 연봉이 비슷한 유저들이 가입한 상품들을 추천해드립니다!</p>
+            <p>나이가 어릴수록 자산보다 연봉이 가중치가 더 높습니다.</p>
             <p
               v-if="isNotSimilarUsers"
               class="ml-5"
             ><br>아쉽게도 내 나이, 자산, 연봉과 비슷한 유저가 없어요 🥲<br>대신 모든 유저들이 많이 가입한 상품 top 20을 준비했습니다!</p>
+            <br>
+            <!-- 은행 선택 드롭다운 -->
+            <v-select
+              v-model="selectedBank2"
+              :items="uniqueBanks2"
+              label="선호 은행 선택"
+              variant="outlined"
+              color="#3CB371"
+              @change="handleBankChange2"
+            ></v-select>
 
+            <!-- 추천 리스트 -->
             <v-data-table-virtual
               :headers="headers"
               fixed-header
-              :items="recommend2"
+              :items="sortedRecommend2"
               item-value="code"
               height="600"
-            >
+            ></v-data-table-virtual>
+
             <template v-slot:item="{ item }">
               <tr @click="clickRow(item)">
                 <td>{{ item['type'] }}</td>
@@ -460,18 +515,30 @@ const deleteProductUser = function (data) {
                 <td align="center">{{ item['36month'] }}</td>
               </tr>
             </template>
-            </v-data-table-virtual>
+
           </v-window-item>
 
           <v-window-item value="two">
             <p>⭐️ 희망 예치 금액, 기간에서 ±50% 이내인 상품들 중, 이자율이 높은 상품을 추천해드립니다!</p>
+            <br>
+            <!-- 은행 선택 드롭다운 -->
+            <v-select
+              v-model="selectedBank1"
+              :items="uniqueBanks1"
+              label="선호 은행 선택"
+              variant="outlined"
+              color="#3CB371"
+              @change="handleBankChange1"
+            ></v-select>
+
+            <!-- 추천 리스트 -->
             <v-data-table-virtual
               :headers="headers"
               fixed-header
-              :items="recommend1"
+              :items="sortedRecommend1"
               item-value="code"
               height="600"
-            >
+            ></v-data-table-virtual>
               <template v-slot:item="{ item }">
                 <tr @click="clickRow(item)">
                   <td>{{ item['type'] }}</td>
@@ -484,7 +551,6 @@ const deleteProductUser = function (data) {
                   <td align="center">{{ item['36month'] }}</td>
                 </tr>
               </template>
-            </v-data-table-virtual>
           </v-window-item>
 
         </v-window>
