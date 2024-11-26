@@ -17,10 +17,6 @@ const currencies = [
 
 <template>
   <div class="container">
-    <h1 class="mb-5"><span class="color">환율</span> 계산기</h1>
-    <ExchangeCalculater class="elevation-6" />
-
-    
     <div class="elevation-6">
       <h1 class="mb-5"><span class="color">환율</span> 변화 그래프</h1>
       <div class="grid-container">
@@ -32,6 +28,10 @@ const currencies = [
         />
       </div>
     </div>
+    <br>
+    <br>
+    <h1 class="mb-5"><span class="color">환율</span> 계산기</h1>
+    <ExchangeCalculater class="elevation-6" />
   </div>
 </template>
 

@@ -100,7 +100,7 @@ const inputEventOther = function () {
         <v-row>
           <v-col cols="3">
             <v-select
-              color="#1089FF"
+              color="#08ba32"
               variant="outlined"
               :items="states"
               label="기준"
@@ -109,7 +109,7 @@ const inputEventOther = function () {
           </v-col>
           <v-col cols="3" offset="6">
             <v-select
-              color="#1089FF"
+              color="#08ba32"
               variant="outlined"
               label="통화 선택"
               :items="currencies"

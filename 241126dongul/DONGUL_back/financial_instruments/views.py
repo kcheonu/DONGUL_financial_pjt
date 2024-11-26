@@ -1,9 +1,8 @@
 from collections import Counter
 from django.shortcuts import get_object_or_404
-from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 from django.conf import settings
-from django.db.models import Q, F
+from django.db.models import Q
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes 
 from rest_framework.permissions import IsAuthenticated
@@ -13,6 +12,7 @@ import requests
 from .serializers import *
 from .models import *
 from accounts.serializers import *
+
 
 def make_financial_data(request):
     DEPOSIT_API_URL = f'http://finlife.fss.or.kr/finlifeapi/depositProductsSearch.json?auth={settings.BANK_API_KEY}&topFinGrpNo=020000&pageNo=1'
@@ -109,9 +109,15 @@ def deposit_list(request):
 @api_view(['GET'])
 def deposit_detail(request, deposit_code):
     deposit = get_object_or_404(Deposit, deposit_code=deposit_code)
+    user_count = User.objects.filter(financial_products__contains=deposit_code).count()
     if request.method == 'GET':
         serializer = DepositSerializer(deposit)
-        return Response(serializer.data)    
+        content={
+            'data' : serializer.data,
+            'count' : user_count
+        }
+        
+        return Response(content)    
     
 
 @api_view(['GET'])
@@ -204,40 +210,48 @@ def get_reverse_savings(request, save_trm):
 @permission_classes([IsAuthenticated])
 def contract_deposit(request, deposit_code):
     deposit = get_object_or_404(Deposit, deposit_code=deposit_code)
-    if request.user in deposit.contract_user.all():
-        deposit.contract_user.remove(request.user)
+    user = request.user
+    if user in deposit.contract_user.all():
+        deposit.contract_user.remove(user)
     else:
-        deposit.contract_user.add(request.user)
+        deposit.contract_user.add(user)
+    
     serializer = ContractDepositSerializer(deposit)
     return Response(serializer.data)
 
 
-@api_view(['GET','POST','DELETE'])
+@api_view(['PUT', 'POST'])
 @permission_classes([IsAuthenticated])
 def contract_deposit(request, deposit_code):
     deposit = get_object_or_404(Deposit, deposit_code=deposit_code)
-    if request.method == 'GET':
-        serializer = ContractDepositSerializer(deposit)
-        return Response(serializer.data)
+    user = request.user  # 현재 요청한 사용자
 
-    elif request.method == 'DELETE':
-        if request.user in deposit.contract_user.all():
-            deposit.contract_user.remove(request.user)
-            return Response({ "detail": "삭제되었습니다." }, status=status.HTTP_204_NO_CONTENT)
+    if user in deposit.contract_user.all():
+        # 계약 해지
+        deposit.contract_user.remove(user)
+        # financial_products에서 해당 상품 제거
+        if user.financial_products and deposit.deposit_code in user.financial_products:
+            products = user.financial_products.split(',')  # 문자열을 리스트로 변환
+            products.remove(deposit.deposit_code)
+            user.financial_products = ','.join(products)  # 다시 문자열로 변환
+    else:
+        # 계약 추가
+        deposit.contract_user.add(user)
+        # financial_products에 해당 상품 추가
+        if user.financial_products:
+            products = user.financial_products.split(',')
+            if deposit.deposit_code not in products:
+                products.append(deposit.deposit_code)
+                user.financial_products = ','.join(products)
         else:
-            return Response({ "detail": "삭제할 항목이 없습니다." }, status=status.HTTP_404_NOT_FOUND)
-        
-    elif request.method == 'POST':
-        if request.user not in deposit.contract_user.all():
-            deposit.contract_user.add(request.user)
-            serializer = ContractDepositSerializer(deposit, data=request.data, partial=True)
+            user.financial_products = deposit.deposit_code  # 처음 추가하는 경우
 
-            if serializer.is_valid(raise_exception=True):
-                serializer.save()
-                return Response({ "detail": "상품이 추가되었습니다." }, status=status.HTTP_200_OK)
-        else:
-            return Response({ "detail": "이미 상품이 존재합니다." }, status=status.HTTP_400_BAD_REQUEST)
+    # 변경사항 저장
+    deposit.save()
+    user.save()  # user 모델 저장
     
+    serializer = ContractDepositSerializer(deposit)
+    return Response(serializer.data)
 
 @api_view(['GET','POST','DELETE'])
 @permission_classes([IsAuthenticated])
@@ -297,30 +311,8 @@ def recommend_product_one(request):
         elif not desired_amount_deposit:
             return Response({"message": "유저의 희망적금금액이 없습니다."})
 
-    # Convert desired_period_deposit and desired_amount_deposit to integers
     desired_period_deposit = int(desired_period_deposit)
     desired_amount_deposit = int(desired_amount_deposit)
-
-    # Filter deposit options
-    # deposit_options = DepositOption.objects.filter(
-    #     save_trm__in=[6, 12, 24, 36]
-    # )
-    # deposit_options = deposit_options.order_by("save_trm")
-    # deposit_options = deposit_options.order_by("deposit__max_limit")
-
-    # # Handle null values for max_limit
-    # deposit_options = deposit_options.filter(
-    #     Q(deposit__max_limit__gte=desired_amount_deposit - desired_amount_deposit // 2) | Q(deposit__max_limit__isnull=True)
-    # )
-
-    # # Filter deposit options by desired period
-    # deposit_options = deposit_options.filter(
-    #     save_trm__lte=desired_period_deposit + desired_period_deposit // 2
-    # )
-
-    # # Sort deposit options by interest rate and limit to top 10
-    # deposit_options = deposit_options.order_by("-intr_rate")
-    # deposit_options = deposit_options[:10]
 
     deposit = Deposit.objects.filter(
         Q(max_limit__gte=desired_amount_deposit - desired_amount_deposit // 3) | Q(max_limit__isnull=True)
@@ -331,37 +323,11 @@ def recommend_product_one(request):
     )
     
     deposit = list(set(deposit.order_by("-depositoption__intr_rate")[:10]))
-    # deposit = deposit[:10]
 
     ####### saving
 
     desired_amount_saving = user.desire_amount_saving
     desired_period_saving = user.saving_period
-
-    # Filter saving options
-    # saving_options = SavingOption.objects.filter(
-    #     save_trm__in=[6, 12, 24, 36]
-    # )
-    # saving_options = saving_options.order_by("save_trm")
-    # saving_options = saving_options.order_by("saving__max_limit")
-
-    # # Handle null values for max_limit
-    # saving_options = saving_options.filter(
-    #     Q(saving__max_limit__gte=desired_amount_saving - desired_amount_saving // 2) | Q(saving__max_limit__isnull=True)
-    # )
-
-    # # Filter saving options by desired period
-    # saving_options = saving_options.filter(
-    #     save_trm__lte=desired_period_saving + desired_period_saving // 2
-    # )
-
-    # # Sort saving options by interest rate and limit to top 10
-    # saving_options = saving_options.order_by("-intr_rate")
-    # saving_options = saving_options[:10]
-
-    # Serialize deposit and saving options
-    # depositserializers = DepositOptionSerializer2(deposit_options, many=True)
-    # savingserializers = SavingOptionSerializer2(saving_options, many=True)
 
     saving = Saving.objects.filter(
         Q(max_limit__gte=desired_amount_saving - desired_amount_saving // 3) | Q(max_limit__isnull=True)
@@ -385,53 +351,41 @@ def recommend_product_one(request):
 
     return Response(product_list)
 
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def recommend_product_two(request):
-    user = request.user
-    age, money, salary = user.age, user.money, user.salary
+def recommend_product_two(request): 
+    age = request.user.age
+    money = request.user.money
+    salary = request.user.salary
+    standard_deviation_age = 6
+    standard_deviation_money = 1_000_000
+    standard_deviation_salary = 1_000_000
+    is_not_similar_users = False
 
-    # 나이에 따른 가중치 설정
-    if age < 30:
-        weight_age = 0.3
-        weight_salary = 0.5
-        weight_money = 0.2
-    elif 30 <= age <= 50:
-        weight_age = 0.3
-        weight_salary = 0.4
-        weight_money = 0.3
-    else:  # 50세 이상
-        weight_age = 0.3
-        weight_salary = 0.2
-        weight_money = 0.5
+    similar_users = User.objects.filter(
+        ~Q(username=request.user.username),
+        age__range=(age - standard_deviation_age, age + standard_deviation_age),
+        money__range=(money - standard_deviation_money, money + standard_deviation_money),
+        salary__range=(salary - standard_deviation_salary, salary + standard_deviation_salary)
+    )
 
-    # 표준편차 설정 (데이터 범위 지정)
-    std_dev_age = 6
-    std_dev_money = 1_000_000
-    std_dev_salary = 1_000_000
-
-    # 유사도 계산: 가중치를 적용한 유클리드 거리
-    similar_users = User.objects.annotate(
-        similarity=(
-            weight_age * (F('age') - age) ** 2 +
-            weight_money * (F('money') - money) ** 2 / std_dev_money ** 2 +
-            weight_salary * (F('salary') - salary) ** 2 / std_dev_salary ** 2
-        )
-    ).filter(~Q(username=user.username)).order_by('similarity')[:100]
-
-    # 비슷한 사용자가 없을 경우 전체 유저 기반 추천
-    is_not_similar_users = not similar_users.exists()
-    if is_not_similar_users:
+    if not similar_users.exists():
+        is_not_similar_users = True
         similar_users = User.objects.all()
 
-    # 유사한 사용자들의 계약 데이터를 수집
-    deposit_list = []
-    saving_list = []
+    id_data = []
 
     for similar_user in similar_users:
-        deposit_list.extend(similar_user.contract_deposit.all())
-        saving_list.extend(similar_user.contract_saving.all())
+        serializer = UserInfoSerializer(similar_user)
+        id_data.append(serializer.data["id"])
+
+    deposit_list = []
+    saving_list = []
+    
+    for user_id in id_data:
+        user = User.objects.get(pk=user_id)
+        deposit_list.extend(user.contract_deposit.all())
+        saving_list.extend(user.contract_saving.all())
 
     # Counter를 사용하여 각 Deposit과 Saving 객체의 등장 횟수를 계산
     deposit_counter = Counter(deposit_list)
@@ -442,23 +396,42 @@ def recommend_product_two(request):
     saving_result = []
 
     for deposit, count in deposit_counter.items():
-        deposit_info = {'deposit': DepositSerializer(deposit).data, 'count': count}
+        # Deposit 객체의 정보와 등장 횟수를 딕셔너리로 저장
+        deposit_info = {
+            'deposit': DepositSerializer(deposit).data, 
+            'count': count,
+            'max_limit': deposit.max_limit or 0,  # 최대 가입 금액
+            'intr_rate': deposit.depositoption_set.order_by('-intr_rate').first().intr_rate if deposit.depositoption_set.exists() else 0  # 최고 금리
+        }
         deposit_result.append(deposit_info)
 
     for saving, count in saving_counter.items():
-        saving_info = {'saving': SavingSerializer(saving).data, 'count': count}
+        # Saving 객체의 정보와 등장 횟수를 딕셔너리로 저장
+        saving_info = {
+            'saving': SavingSerializer(saving).data, 
+            'count': count,
+            'max_limit': saving.max_limit or 0,  # 최대 가입 금액
+            'intr_rate': saving.savingoption_set.order_by('-intr_rate').first().intr_rate if saving.savingoption_set.exists() else 0  # 최고 금리
+        }
         saving_result.append(saving_info)
 
-    # 등장 횟수를 기준으로 내림차순 정렬
+    # 등장 횟수를 기준으로 1차 정렬
     deposit_result = sorted(deposit_result, key=lambda x: x['count'], reverse=True)[:10]
     saving_result = sorted(saving_result, key=lambda x: x['count'], reverse=True)[:10]
 
-    # 결과를 result에 저장
+    # 자산이 높으면: 최대 가입 금액으로 2차 정렬
+    if money > salary:
+        deposit_result = sorted(deposit_result, key=lambda x: x['max_limit'], reverse=True)
+        saving_result = sorted(saving_result, key=lambda x: x['max_limit'], reverse=True)
+    # 연봉이 높으면: 금리로 2차 정렬
+    else:
+        deposit_result = sorted(deposit_result, key=lambda x: x['intr_rate'], reverse=True)
+        saving_result = sorted(saving_result, key=lambda x: x['intr_rate'], reverse=True)
+
     result = {
-        'is_not_similar_users': is_not_similar_users,
-        'deposit': deposit_result,
+        'is_not_similar_users': is_not_similar_users, 
+        'deposit': deposit_result, 
         'saving': saving_result
     }
 
-    # result 반환
     return Response(result)

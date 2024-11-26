@@ -186,18 +186,19 @@ const getProduct = function () {
   })
     .then((res) => {
       const data = res.data
+      console.log(res.data)
       selectedProduct.value = {
-        '가입자 수 (DONGUL 기준)': data.contract_user.length,
-        '공시 제출월': data['dcls_month'],
-        '금융 회사명': data['kor_co_nm'],
-        '금융 상품명': data['name'],
-        '가입 방법': data['join_way'],
-        '만기 후 이자율': data['mtrt_int'],
-        '우대 조건': data['spcl_cnd'],
-        '가입 대상': data['join_member'],
-        '가입 제한': data['join_deny'] === 1 ? '제한없음' : data['join_deny'] === 2 ? '서민전용' : '일부제한',
-        '최고 한도': data['max_limit'],
-        '기타 유의사항': data['etc_note']
+        '가입자 수 (DONGUL 기준)': data.count,
+        '공시 제출월': data.data['dcls_month'],
+        '금융 회사명': data.data['kor_co_nm'],
+        '금융 상품명': data.data['name'],
+        '가입 방법': data.data['join_way'],
+        '만기 후 이자율': data.data['mtrt_int'],
+        '우대 조건': data.data['spcl_cnd'],
+        '가입 대상': data.data['join_member'],
+        '가입 제한': data.data['join_deny'] === 1 ? '제한없음' : data.data['join_deny'] === 2 ? '서민전용' : '일부제한',
+        '최고 한도': data.data['max_limit'],
+        '기타 유의사항': data.data['etc_note']
       }
 
       if (isDeposit.value) {
@@ -488,20 +489,16 @@ const handleBankChange2 = (bank) => {
               고객님과 나이, 자산, 연봉이 비슷한 유저들이 가입한 상품을 추천합니다!
             </p>
             <p class="text-body-2 text-secondary mb-4">
-              나이가 어릴수록 자산보다 연봉이 가중치가 더 높습니다.
+              나이에 따라 자산과 연봉의 가중치가 다릅니다.
+              자산이 많으면 최대가입금액이 높은 상품을, 연봉이 많으면 금리가 높은상품을 추천합니다!  
             </p>
-            <v-alert
+            <p
               v-if="isNotSimilarUsers"
-              type="info"
-              border="start"
-              color="#E8F4FA"
-              text
-              class="mb-4"
-            >
-              비슷한 유저가 없습니다. 
-              사람들이 많이 가입한 상품입니다.
-            </v-alert>
-
+              class="ml-5"
+            ><br>비슷한 유저가 없습니다<br>대신 모든 유저들이 많이 가입한 상품 top 20을 준비했습니다!
+            <br>
+            <br>
+            </p>
             <!-- 은행 선택 드롭다운 -->
             <v-select
               v-model="selectedBank2"
