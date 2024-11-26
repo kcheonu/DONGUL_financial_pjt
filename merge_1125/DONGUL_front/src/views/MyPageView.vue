@@ -1,0 +1,45 @@
+<script setup>
+import { ref } from 'vue'
+import { useUserStore } from '@/stores/users'
+
+const userStore = useUserStore()
+</script>
+
+<template>
+  <div class="container">
+    <header class="d-flex align-center mb-7">
+      <RouterLink :to="{ name: 'myPage', params: { username: userStore.userInfo.username }}" exact-active-class="active">회원 정보 관리</RouterLink>
+      <p>|</p>
+      <RouterLink :to="{ name: 'productManage', params: { username: userStore.userInfo.username }}" exact-active-class="active">가입 상품 관리</RouterLink>
+      <p>|</p>
+      <RouterLink :to="{ name: 'productRecommend', params: { username: userStore.userInfo.username }}" exact-active-class="active">상품 추천 받기</RouterLink>
+    </header>
+    <RouterView />
+  </div>
+</template>
+
+<style scoped>
+/* 컨테이너 스타일 수정: 상단 여백 추가 */
+.container {
+  width: 1000px;
+  margin: 2rem auto;
+  padding-top: 100px; /* 네비게이션 바 높이 + 여유 공간 */
+}
+
+a.active {
+  color: #3CB371;
+}
+
+header {
+  gap: 10px;
+  font-size: 17px;
+}
+
+header a {
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: -1px;
+  color: #222;
+  text-decoration: none;
+}
+</style>
