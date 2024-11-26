@@ -2,7 +2,7 @@ from rest_framework import serializers
 from allauth.account.adapter import get_adapter
 from .models import User
 from dj_rest_auth.registration.serializers import RegisterSerializer
-from financial_instruments.serializers import ContractDepositSerializer, ContractSavingSerializer
+from financials.serializers import ContractDepositSerializer, ContractSavingSerializer
 
 
 
