@@ -88,7 +88,6 @@ DONGUL/
 │   ├── App.vue                - Vue 루트 컴포넌트
 │   ├── main.js                - Vue 진입점 및 초기 설정
 │   ├── package.json           - Node.js 의존성 및 스크립트 관리
-│   ├── README_IMG/            - 프론트엔드 관련 이미지 저장
 │
 └── README.md                  - 프로젝트 개요 및 설명
 
