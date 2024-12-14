@@ -3,8 +3,9 @@
 * 추가기능 : 환율계산기, 근처 은행 검색, 금융상품비교
 
 <hr>
-![My Skills](https://skillicons.dev/icons?i=js,html,css,wasm)(https://skillicons.dev)
-![My Skills](https://skillicons.dev/icons?i=bash,django,github,nodejs,pinia,postman,py,react,vite,vue)(https://skillicons.dev)
+
+[![My Skills](https://skillicons.dev/icons?i=js,html,css,wasm)](https://skillicons.dev)
+[![My Skills](https://skillicons.dev/icons?i=bash,django,github,nodejs,pinia,postman,py,react,vite,vue)](https://skillicons.dev)
 
 ## 프로젝트 목표
 1. <strong>금융 상품 비교 애플리케이션 서비스 완성</strong>
