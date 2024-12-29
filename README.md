@@ -4,7 +4,7 @@
 
 <hr>
 
-[![My Skills](https://skillicons.dev/icons?i=js,html,css,wasm)](https://skillicons.dev)
+[![My Skills](https://skillicons.dev/icons?i=js,html,css)](https://skillicons.dev)
 [![My Skills](https://skillicons.dev/icons?i=bash,django,github,nodejs,pinia,postman,py,react,vite,vue)](https://skillicons.dev)
 
 ## 프로젝트 목표
